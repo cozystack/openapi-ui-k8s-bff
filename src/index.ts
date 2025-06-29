@@ -8,7 +8,7 @@ const metricsMiddleware = promBundle({ includeMethod: true })
 const cors = require('cors')
 const winston = require('winston')
 const expressWinston = require('express-winston')
-import { examplePost } from './endpoints/example/example'
+import { getDerefedSwagger } from './endpoints/swagger/swagger'
 
 dotenv.config()
 
@@ -54,7 +54,7 @@ app.use(
   }),
 )
 
-app.post('/openapi-bff/example/example', examplePost)
+app.get('/openapi-bff/swagger/swagger/:clusterName', getDerefedSwagger)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at port: ${port}`)

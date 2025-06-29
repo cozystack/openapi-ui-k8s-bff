@@ -3,9 +3,3 @@ export type THeaders = {
     authorization?: string
   } & unknown
 }
-
-export type TExample = {
-  body: {
-    cluster: string
-  }
-} & THeaders

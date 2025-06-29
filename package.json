@@ -6,14 +6,15 @@
   "scripts": {
     "build": "npx tsc --noEmit false",
     "start": "node dist/index.js",
-    "dev:prod": "cross-env PORT=4001 ts-node dist/index.js",
-    "dev": "cross-env PORT=4001 nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node src/index.ts\"",
+    "dev:prod": "cross-env PORT=4002 ts-node dist/index.js",
+    "dev": "cross-env PORT=4002 nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node src/index.ts\"",
     "tsc": "tsc --project tsconfig.json",
     "lint:js": "eslint",
     "lint": "npm run lint:js && npm run tsc",
     "swagger:gen": "ts-node ./src/swagger.ts"
   },
   "dependencies": {
+    "@readme/openapi-parser": "4.0.0",
     "axios": "1.10.0",
     "body-parser": "1.20.2",
     "cors": "2.8.5",
@@ -23,6 +24,7 @@
     "express-prom-bundle": "8.0.0",
     "express-winston": "4.2.0",
     "express-ws": "5.0.2",
+    "openapi-types": "12.1.3",
     "prom-client": "15.1.3",
     "swagger-autogen": "2.23.7",
     "swagger-ui-express": "5.0.1",
