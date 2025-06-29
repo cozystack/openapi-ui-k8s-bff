@@ -1,0 +1,52 @@
+{
+  "root": true,
+  "extends": ["plugin:prettier/recommended", "eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true,
+      "modules": true,
+      "experimentalObjectRestSpread": true
+    },
+    "project": ["./tsconfig.json"]
+  },
+  "plugins": ["prettier", "@typescript-eslint", "import"],
+  // "ignorePatterns": ["example/**"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/explicit-module-boundary-types": "warn"
+      }
+    }
+  ],
+  "rules": {
+    "quotes": ["off", "single"],
+    "semi": ["error", "never"],
+    "prefer-template": "off",
+    "no-alert": "error",
+    "no-else-return": 1,
+    "no-cond-assign": "error",
+    "no-lonely-if": "warn",
+    "no-dupe-else-if": "warn",
+    "no-duplicate-case": "warn",
+    "prettier/prettier": "error",
+    "import/prefer-default-export": "off",
+    "import/no-unresolved": "off",
+    "import/extensions": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-shadow": "off",
+    "max-lines-per-function": ["warn", 250],
+    "import/no-default-export": "warn",
+    "no-unused-expressions": "off",
+    "no-unused-vars": "off",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "@typescript-eslint/no-unused-expressions": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-require-imports": "off",
+    "@typescript-eslint/no-explicit-any": "off"
+  }
+}
