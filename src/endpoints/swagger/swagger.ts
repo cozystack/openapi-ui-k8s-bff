@@ -1,28 +1,14 @@
 import { RequestHandler } from 'express'
-import axios from 'axios'
-const https = require('https')
-import { dereference } from '@readme/openapi-parser'
-import { OpenAPIV2 } from 'openapi-types'
-import { KUBE_API_URL } from '../../constants/kubeApiUrl'
-
-const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+import { getClusterSwagger } from '../../cache'
 
 export const getDerefedSwagger: RequestHandler = async (req, res) => {
   try {
     const { clusterName } = req.params
-    // const authHeader = req.headers.authorization
-    axios
-      .get<OpenAPIV2.Document>(`${KUBE_API_URL}/api/clusters/${clusterName}/k8s/openapi/v2`, {
-        httpsAgent,
-      })
-      .then(({ data }) => {
-        dereference(data, {
-          dereference: {
-            circular: 'ignore',
-          },
-        }).then(data => res.json(data))
-      })
+    const swagger = await getClusterSwagger(clusterName)
+
+    return res.json(swagger)
   } catch (error) {
-    res.status(500).json(error)
+    console.error('Error getting dereferenced Swagger:', error)
+    return res.status(500).json(error)
   }
 }

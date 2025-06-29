@@ -8,9 +8,18 @@ const metricsMiddleware = promBundle({ includeMethod: true })
 const cors = require('cors')
 const winston = require('winston')
 const expressWinston = require('express-winston')
+const apicache = require('apicache')
+const NodeCache = require('node-cache')
 import { getDerefedSwagger } from './endpoints/swagger/swagger'
+import { getYamlValuesByFromValues, getFormValuesByYaml } from './endpoints/forms/formSync/formSync'
+import { prepareFormProps } from './endpoints/forms/formPrepare/formPrepare'
+import { checkIfApiNamespaceScoped, checkIfBuiltInNamespaceScoped } from './endpoints/scopes/checkScopes'
+import { filterIfApiNamespaceScoped, filterIfBuiltInNamespaceScoped } from './endpoints/scopes/filterByScope'
 
 dotenv.config()
+
+const cache = apicache.middleware
+const nodeCache = new NodeCache({ stdTTL: 60 * 5, checkperiod: 60 * 4 })
 
 const nonWsApp: Express = express()
 const { app } = expressWs(nonWsApp)
@@ -44,7 +53,7 @@ if (process.env.LOGGER === 'TRUE') {
   )
 }
 
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '50mb' }))
 
 const FRONTEND_URL_FOR_CORS = process.env.FRONTEND_URL_FOR_CORS || 'http://localhost:3000'
 
@@ -54,7 +63,19 @@ app.use(
   }),
 )
 
-app.get('/openapi-bff/swagger/swagger/:clusterName', getDerefedSwagger)
+/* swagger */
+app.get('/openapi-bff/swagger/swagger/:clusterName', cache('5 minutes'), getDerefedSwagger)
+
+/* forms */
+app.post('/openapi-bff/forms/formSync/getYamlValuesByFromValues', getYamlValuesByFromValues)
+app.post('/openapi-bff/forms/formSync/getFormValuesByYaml', getFormValuesByYaml)
+app.post('/openapi-bff/forms/formPrepare/prepareFormProps', prepareFormProps)
+
+/* scopes */
+app.post('/openapi-bff/scopes/checkScopes/checkIfApiNamespaceScoped', checkIfApiNamespaceScoped)
+app.post('/openapi-bff/scopes/checkScopes/checkIfBuiltInNamespaceScoped', checkIfBuiltInNamespaceScoped)
+app.post('/openapi-bff/scopes/filterScopes/filterIfApiNamespaceScoped', filterIfApiNamespaceScoped)
+app.post('/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespaceScoped', filterIfBuiltInNamespaceScoped)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at port: ${port}`)
