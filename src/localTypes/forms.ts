@@ -3,7 +3,7 @@ import { THeaders } from './common'
 import { TJSON } from './JSON'
 import { TFormsOverridesData } from './formExtensions'
 
-export type TPrepareFormReq = {
+export type TPrepareForm = {
   body: {
     data:
       | {
@@ -22,6 +22,27 @@ export type TPrepareFormReq = {
         }
     clusterName: string
     formsOverridesData?: TFormsOverridesData
+  }
+} & THeaders
+
+export type TPrepareFormReq = {
+  body: {
+    data:
+      | {
+          type: 'builtin'
+          typeName: string
+          prefillValuesSchema?: TJSON
+          prefillValueNamespaceOnly?: string
+        }
+      | {
+          type: 'apis'
+          apiGroup: string
+          apiVersion: string
+          typeName: string
+          prefillValuesSchema?: TJSON
+          prefillValueNamespaceOnly?: string
+        }
+    clusterName: string
   }
 } & THeaders
 

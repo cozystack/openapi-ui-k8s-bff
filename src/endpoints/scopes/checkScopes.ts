@@ -1,12 +1,12 @@
 import { RequestHandler } from 'express'
-import { getClusterSwagger } from '../../cache'
-import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from '../../utils/checkScope'
+import { getClusterSwagger } from 'src/cache'
+import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 import {
   TCheckIfApiInstanceNamespaceScopedReq,
   TCheckIfApiInstanceNamespaceScopedRes,
   TCheckIfBuiltInInstanceNamespaceScopedReq,
   TCheckIfBuiltInInstanceNamespaceScopedRes,
-} from '../../localTypes/scopes'
+} from 'src/localTypes/scopes'
 
 export const checkIfApiNamespaceScoped: RequestHandler = async (req: TCheckIfApiInstanceNamespaceScopedReq, res) => {
   try {

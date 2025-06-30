@@ -1,12 +1,6 @@
 import { RequestHandler } from 'express'
 import { OpenAPIV2 } from 'openapi-types'
-import {
-  TFormName,
-  TYamlByValuesReq,
-  TValuesByYamlReq,
-  TYamlByValuesRes,
-  TValuesByYamlRes,
-} from '../../../localTypes/forms'
+import { TFormName, TYamlByValuesReq, TValuesByYamlReq, TYamlByValuesRes, TValuesByYamlRes } from 'src/localTypes/forms'
 import {
   removeEmptyFormValues,
   renameBrokenFieldBack,

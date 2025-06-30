@@ -9,11 +9,11 @@ const cors = require('cors')
 const winston = require('winston')
 const expressWinston = require('express-winston')
 // const apicache = require('apicache')
-import { getDerefedSwagger } from './endpoints/swagger/swagger'
-import { getYamlValuesByFromValues, getFormValuesByYaml } from './endpoints/forms/formSync/formSync'
-import { prepareFormProps } from './endpoints/forms/formPrepare/formPrepare'
-import { checkIfApiNamespaceScoped, checkIfBuiltInNamespaceScoped } from './endpoints/scopes/checkScopes'
-import { filterIfApiNamespaceScoped, filterIfBuiltInNamespaceScoped } from './endpoints/scopes/filterByScope'
+import { getDerefedSwagger } from 'src/endpoints/swagger/swagger'
+import { getYamlValuesByFromValues, getFormValuesByYaml } from 'src/endpoints/forms/formSync/formSync'
+import { prepareFormProps } from 'src/endpoints/forms/formPrepare/formPrepare'
+import { checkIfApiNamespaceScoped, checkIfBuiltInNamespaceScoped } from 'src/endpoints/scopes/checkScopes'
+import { filterIfApiNamespaceScoped, filterIfBuiltInNamespaceScoped } from 'src/endpoints/scopes/filterByScope'
 
 dotenv.config()
 

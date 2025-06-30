@@ -2,10 +2,8 @@ import NodeCache from 'node-cache'
 import axios from 'axios'
 import { dereference } from '@readme/openapi-parser'
 import { OpenAPIV2 } from 'openapi-types'
-import { KUBE_API_URL } from './constants/kubeApiUrl'
-
-const https = require('https')
-const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+import { KUBE_API_URL } from 'src/constants/kubeApiUrl'
+import { httpsAgent } from 'src/constants/httpAgent'
 
 const DEFAULT_TTL = 60 * 15
 const CHECK_PERIOD = 60 * 14

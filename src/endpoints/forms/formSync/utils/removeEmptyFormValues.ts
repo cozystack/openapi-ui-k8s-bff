@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-param-reassign */
-import { TFormName } from '../../../../localTypes/forms'
+import { TFormName } from 'src/localTypes/forms'
 
 // export const removeEmptyFormValues = (object: any) => {
 //   if (typeof object === 'object' && !Array.isArray(object) && object !== null) {

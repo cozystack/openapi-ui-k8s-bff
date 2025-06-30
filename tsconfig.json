@@ -16,7 +16,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "outDir": "./dist",
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "paths": {
+      "src/*": ["./src/*"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
