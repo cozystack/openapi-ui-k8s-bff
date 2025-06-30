@@ -77,9 +77,19 @@ const prepare = async ({ data, clusterName, formsOverridesData }: TPrepareForm['
 
 export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res) => {
   try {
+    const cookies = req.headers.cookie
+
     const { data: formsOverridesData } = await axios.get<TFormsOverridesData>(
       `${KUBE_API_URL}/api/clusters/${req.body.clusterName}/k8s/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
-      { httpsAgent },
+      {
+        httpsAgent,
+        headers: {
+          // Forward cookies to the backend
+          Cookie: cookies,
+          // Optional: Forward the User-Agent or other headers if needed
+          'User-Agent': req.headers['user-agent'],
+        },
+      },
     )
 
     const result: TPrepareFormRes = await prepare({ ...req.body, formsOverridesData })
