@@ -6,8 +6,8 @@
   "scripts": {
     "build": "npx tsc --noEmit false",
     "start": "node dist/index.js",
-    "dev:prod": "cross-env PORT=4002 ts-node dist/index.js",
-    "dev": "cross-env PORT=4002 nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node src/index.ts\"",
+    "dev:prod": "cross-env PORT=4002 ts-node -r tsconfig-paths/register dist/index.js",
+    "dev": "cross-env PORT=4002 nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node -r tsconfig-paths/register src/index.ts\"",
     "tsc": "tsc --project tsconfig.json",
     "lint:js": "eslint",
     "lint": "npm run lint:js && npm run tsc",

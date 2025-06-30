@@ -1,15 +1,15 @@
 import { RequestHandler } from 'express'
 import _ from 'lodash'
-import { getClusterSwagger } from '../../../cache'
-import { TPrepareFormReq, TPrepareFormRes } from '../../../localTypes/forms'
+import axios from 'axios'
+import { getClusterSwagger } from 'src/cache'
+import { TPrepareForm, TPrepareFormReq, TPrepareFormRes } from 'src/localTypes/forms'
+import { TFormsOverridesData } from 'src/localTypes/formExtensions'
+import { KUBE_API_URL, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/kubeApiUrl'
 import { getSwaggerPathAndIsNamespaceScoped, getBodyParametersSchema, processOverride } from './utils/utils'
 import { getPathsWithAdditionalProperties, getPropertiesToMerge } from './utils/helpers'
+import { httpsAgent } from 'src/constants/httpAgent'
 
-const prepare = async ({
-  data,
-  clusterName,
-  formsOverridesData,
-}: TPrepareFormReq['body']): Promise<TPrepareFormRes> => {
+const prepare = async ({ data, clusterName, formsOverridesData }: TPrepareForm['body']): Promise<TPrepareFormRes> => {
   const swagger = await getClusterSwagger(clusterName)
 
   if (!swagger) {
@@ -63,12 +63,26 @@ const prepare = async ({
     bodyParametersSchema,
   })
 
-  return { result: 'success', properties, required, hiddenPaths, expandedPaths, persistedPaths, kindName, isNamespaced }
+  return {
+    result: 'success',
+    properties,
+    required,
+    hiddenPaths: hiddenPaths || [],
+    expandedPaths,
+    persistedPaths,
+    kindName,
+    isNamespaced,
+  }
 }
 
 export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res) => {
   try {
-    const result: TPrepareFormRes = await prepare(req.body)
+    const { data: formsOverridesData } = await axios.get<TFormsOverridesData>(
+      `${KUBE_API_URL}/api/clusters/${req.body.clusterName}/k8s/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
+      { httpsAgent },
+    )
+
+    const result: TPrepareFormRes = await prepare({ ...req.body, formsOverridesData })
     res.json(result)
   } catch (error) {
     res.status(500).json(error)

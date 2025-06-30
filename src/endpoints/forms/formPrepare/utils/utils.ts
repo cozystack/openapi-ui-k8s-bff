@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { OpenAPIV2 } from 'openapi-types'
-import { TJSON } from '../../../../localTypes/JSON'
-import { TFormOverride } from '../../../../localTypes/formExtensions'
-import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from '../../../../utils/checkScope'
+import { TJSON } from 'src/localTypes/JSON'
+import { TFormOverride } from 'src/localTypes/formExtensions'
+import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 import { overwriteMatchingKeys } from './overwriteMatchingKeys'
 import { isFormOverride } from './guards'
 

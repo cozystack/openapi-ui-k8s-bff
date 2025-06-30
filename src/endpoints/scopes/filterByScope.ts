@@ -1,11 +1,11 @@
 import { RequestHandler } from 'express'
-import { getClusterSwagger } from '../../cache'
+import { getClusterSwagger } from 'src/cache'
 import {
   TFilterIfApiInstanceNamespaceScopedReq,
   TFilterIfApiInstanceNamespaceScopedRes,
   TFilterIfBuiltInInstanceNamespaceScopedReq,
   TFilterIfBuiltInInstanceNamespaceScopedRes,
-} from '../../localTypes/scopes'
+} from 'src/localTypes/scopes'
 import { filterBuiltinResources } from './utils/filterBuiltinResources'
 import { filterApiResources } from './utils/filterApiResources'
 

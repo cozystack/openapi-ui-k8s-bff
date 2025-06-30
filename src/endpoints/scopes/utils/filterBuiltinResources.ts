@@ -1,6 +1,6 @@
 import { OpenAPIV2 } from 'openapi-types'
-import { TBuiltinResourceTypeList } from '../../../localTypes/k8s'
-import { checkIfBuiltInInstanceNamespaceScoped } from '../../../utils/checkScope'
+import { TBuiltinResourceTypeList } from 'src/localTypes/k8s'
+import { checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 
 export const filterBuiltinResources = ({
   namespace,

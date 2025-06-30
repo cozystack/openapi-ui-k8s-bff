@@ -1,6 +1,6 @@
 import { OpenAPIV2 } from 'openapi-types'
-import { TApiGroupResourceTypeList } from '../../../localTypes/k8s'
-import { checkIfApiInstanceNamespaceScoped } from '../../../utils/checkScope'
+import { TApiGroupResourceTypeList } from 'src/localTypes/k8s'
+import { checkIfApiInstanceNamespaceScoped } from 'src/utils/checkScope'
 
 export const filterApiResources = ({
   namespace,

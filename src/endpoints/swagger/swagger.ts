@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express'
-import { getClusterSwagger } from '../../cache'
+import { getClusterSwagger } from 'src/cache'
 
 export const getDerefedSwagger: RequestHandler = async (req, res) => {
   try {
