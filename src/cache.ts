@@ -2,7 +2,7 @@ import NodeCache from 'node-cache'
 import axios from 'axios'
 import { dereference } from '@readme/openapi-parser'
 import { OpenAPIV2 } from 'openapi-types'
-import { KUBE_API_URL } from 'src/constants/kubeApiUrl'
+import { COOKIE_FOR_BFF, USER_AGENT_FOR_BFF, KUBE_API_URL } from 'src/constants/kubeApiUrl'
 import { httpsAgent } from 'src/constants/httpAgent'
 
 const DEFAULT_TTL = 60 * 15
@@ -14,7 +14,15 @@ async function fetchAndDerefSwagger(clusterName: string): Promise<OpenAPIV2.Docu
   try {
     const { data: rawSpec } = await axios.get<OpenAPIV2.Document>(
       `${KUBE_API_URL}/api/clusters/${clusterName}/k8s/openapi/v2`,
-      { httpsAgent },
+      {
+        httpsAgent,
+        headers: {
+          // Forward cookies to the backend
+          Cookie: COOKIE_FOR_BFF,
+          // Optional: Forward the User-Agent or other headers if needed
+          'User-Agent': USER_AGENT_FOR_BFF,
+        },
+      },
     )
     return await dereference(rawSpec, { dereference: { circular: 'ignore' } })
   } catch (err) {
