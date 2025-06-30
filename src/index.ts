@@ -8,8 +8,7 @@ const metricsMiddleware = promBundle({ includeMethod: true })
 const cors = require('cors')
 const winston = require('winston')
 const expressWinston = require('express-winston')
-const apicache = require('apicache')
-const NodeCache = require('node-cache')
+// const apicache = require('apicache')
 import { getDerefedSwagger } from './endpoints/swagger/swagger'
 import { getYamlValuesByFromValues, getFormValuesByYaml } from './endpoints/forms/formSync/formSync'
 import { prepareFormProps } from './endpoints/forms/formPrepare/formPrepare'
@@ -18,8 +17,7 @@ import { filterIfApiNamespaceScoped, filterIfBuiltInNamespaceScoped } from './en
 
 dotenv.config()
 
-const cache = apicache.middleware
-const nodeCache = new NodeCache({ stdTTL: 60 * 5, checkperiod: 60 * 4 })
+// const cache = apicache.middleware
 
 const nonWsApp: Express = express()
 const { app } = expressWs(nonWsApp)
@@ -64,7 +62,8 @@ app.use(
 )
 
 /* swagger */
-app.get('/openapi-bff/swagger/swagger/:clusterName', cache('5 minutes'), getDerefedSwagger)
+// app.get('/openapi-bff/swagger/swagger/:clusterName', cache('5 minutes'), getDerefedSwagger)
+app.get('/openapi-bff/swagger/swagger/:clusterName', getDerefedSwagger)
 
 /* forms */
 app.post('/openapi-bff/forms/formSync/getYamlValuesByFromValues', getYamlValuesByFromValues)

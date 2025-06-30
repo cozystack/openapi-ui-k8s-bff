@@ -7,8 +7,8 @@ import { KUBE_API_URL } from './constants/kubeApiUrl'
 const https = require('https')
 const httpsAgent = new https.Agent({ rejectUnauthorized: false })
 
-const DEFAULT_TTL = 60
-const CHECK_PERIOD = 10
+const DEFAULT_TTL = 60 * 15
+const CHECK_PERIOD = 60 * 14
 
 export const cache = new NodeCache({ stdTTL: DEFAULT_TTL, checkperiod: CHECK_PERIOD })
 
