@@ -1,1 +1,1 @@
-export type TJSON = string | number | boolean | TJSON[] | { [key: string]: TJSON }
+export type TJSON = null | string | number | boolean | TJSON[] | { [key: string]: TJSON }
