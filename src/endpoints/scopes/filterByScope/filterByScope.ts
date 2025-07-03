@@ -5,7 +5,7 @@ import {
   TFilterIfApiInstanceNamespaceScopedRes,
   TFilterIfBuiltInInstanceNamespaceScopedReq,
   TFilterIfBuiltInInstanceNamespaceScopedRes,
-} from 'src/localTypes/scopes'
+} from 'src/localTypes/endpoints/scopes'
 import { filterBuiltinResources } from './utils/filterBuiltinResources'
 import { filterApiResources } from './utils/filterApiResources'
 

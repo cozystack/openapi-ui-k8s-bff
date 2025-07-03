@@ -2,7 +2,7 @@ import NodeCache from 'node-cache'
 import axios from 'axios'
 import { dereference } from '@readme/openapi-parser'
 import { OpenAPIV2 } from 'openapi-types'
-import { COOKIE_FOR_BFF, USER_AGENT_FOR_BFF, KUBE_API_URL } from 'src/constants/kubeApiUrl'
+import { COOKIE_FOR_BFF, USER_AGENT_FOR_BFF, KUBE_API_URL } from 'src/constants/envs'
 import { httpsAgent } from 'src/constants/httpAgent'
 
 const DEFAULT_TTL = 60 * 15

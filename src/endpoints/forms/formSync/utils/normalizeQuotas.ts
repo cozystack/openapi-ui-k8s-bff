@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import _ from 'lodash'
 import { OpenAPIV2 } from 'openapi-types'
-import { parseQuotaValueCpu, parseQuotaValueMemoryAndStorage } from './parseForQuotaValues'
+import { parseQuotaValueCpu, parseQuotaValueMemoryAndStorage } from './parseQuotas'
 
 type Path = (string | number)[]
 
