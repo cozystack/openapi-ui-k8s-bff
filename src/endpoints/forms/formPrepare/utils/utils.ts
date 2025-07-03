@@ -4,7 +4,6 @@ import { TJSON } from 'src/localTypes/JSON'
 import { TFormOverride } from 'src/localTypes/formExtensions'
 import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 import { overwriteMatchingKeys } from './overwriteMatchingKeys'
-import { isFormOverride } from './guards'
 
 export const getSwaggerPathAndIsNamespaceScoped = ({
   swagger,
@@ -144,7 +143,7 @@ export const processOverride = ({
   let propertiesToApply = newProperties
   let requiredToApply
 
-  if (isFormOverride(specificCustomOverrides)) {
+  if (specificCustomOverrides) {
     if (specificCustomOverrides.spec.hidden) {
       hiddenPaths = specificCustomOverrides.spec.hidden
     }
