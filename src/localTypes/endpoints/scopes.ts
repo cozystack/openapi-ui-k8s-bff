@@ -1,5 +1,5 @@
 import { THeaders } from './common'
-import { TApiGroupResourceTypeList, TBuiltinResourceTypeList } from './k8s'
+import { TApiGroupResourceTypeList, TBuiltinResourceTypeList } from '../k8s'
 
 /* check */
 export type TCheckIfApiInstanceNamespaceScopedReq = {

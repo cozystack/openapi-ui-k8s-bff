@@ -1,49 +1,6 @@
 import _ from 'lodash'
-import { OpenAPIV2 } from 'openapi-types'
 import { TJSON } from 'src/localTypes/JSON'
-
-export const getPathsWithAdditionalProperties = ({
-  properties,
-  currentPath = [],
-  result = [],
-}: {
-  properties: OpenAPIV2.SchemaObject['properties']
-  currentPath?: (string | number)[]
-  result?: (string | number)[][]
-}): (string | number)[][] => {
-  if (properties) {
-    Object.keys(properties).forEach((key: keyof typeof properties) => {
-      const newPath = [...currentPath, key]
-      if (key === 'additionalProperties') {
-        result.push(currentPath)
-      } else if (typeof properties[key] === 'object' && properties[key] !== null) {
-        getPathsWithAdditionalProperties({ properties: properties[key], currentPath: newPath, result })
-      }
-    })
-  }
-
-  return result
-}
-
-export const buildNestedObject = ({
-  path,
-  defaultValue,
-}: {
-  path: (string | number)[]
-  defaultValue: unknown
-}): Record<string, unknown> => {
-  if (path.length === 0) {
-    return {}
-  }
-
-  const [firstKey, ...remainingKeys] = path
-
-  if (remainingKeys.length === 0) {
-    return { [firstKey]: defaultValue }
-  }
-
-  return { [firstKey]: buildNestedObject({ path: remainingKeys, defaultValue }) }
-}
+import { buildNestedObject } from './buildNestedObject'
 
 export const getPropertiesToMerge = ({
   pathsWithAdditionalProperties,

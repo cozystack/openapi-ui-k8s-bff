@@ -1,6 +1,6 @@
 export type TFormPrefill = {
   spec: {
-    overrideType: string
+    customizationId: string
     values: {
       path: (string | number)[]
       value: unknown
@@ -14,7 +14,7 @@ export type TFormsPrefillsData = {
 
 export type TFormOverride = {
   spec: {
-    overrideType: string
+    customizationId: string
     strategy: string
     schema: {
       properties: Record<string, unknown>

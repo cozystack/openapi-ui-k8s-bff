@@ -6,7 +6,7 @@ import {
   TCheckIfApiInstanceNamespaceScopedRes,
   TCheckIfBuiltInInstanceNamespaceScopedReq,
   TCheckIfBuiltInInstanceNamespaceScopedRes,
-} from 'src/localTypes/scopes'
+} from 'src/localTypes/endpoints/scopes'
 
 export const checkIfApiNamespaceScoped: RequestHandler = async (req: TCheckIfApiInstanceNamespaceScopedReq, res) => {
   try {
