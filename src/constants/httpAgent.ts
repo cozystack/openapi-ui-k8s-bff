@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import https from 'https'
 import axios, { AxiosInstance } from 'axios'
-import { KUBE_API_URL, DEVELOPMENT } from './envs'
+import { KUBE_API_URL, DEV_KUBE_API_URL, DEVELOPMENT } from './envs'
 
 const serviceAccountDir = '/var/run/secrets/kubernetes.io/serviceaccount'
 const caPath = path.join(serviceAccountDir, 'ca.crt')
@@ -22,9 +22,7 @@ if (fs.existsSync(tokenPath)) {
 export const httpsAgent = new https.Agent({ ca, rejectUnauthorized: DEVELOPMENT ? false : true })
 
 export const kubeApi: AxiosInstance = axios.create({
-  baseURL: DEVELOPMENT
-    ? KUBE_API_URL
-    : `https://${process.env.KUBERNETES_SERVICE_HOST}:${process.env.KUBERNETES_SERVICE_PORT}`,
+  baseURL: DEVELOPMENT ? DEV_KUBE_API_URL : KUBE_API_URL,
   httpsAgent,
   headers: DEVELOPMENT
     ? undefined
@@ -37,4 +35,9 @@ export const kubeApi: AxiosInstance = axios.create({
   timeout: 5_000,
 })
 
-export const httpsAgentUser = new https.Agent({ rejectUnauthorized: false })
+export const userKubeApi: AxiosInstance = axios.create({
+  baseURL: DEVELOPMENT ? DEV_KUBE_API_URL : KUBE_API_URL,
+  httpsAgent,
+  // (optionally) short timeouts so your BFF fails fast if the API is unreachable
+  timeout: 5_000,
+})
