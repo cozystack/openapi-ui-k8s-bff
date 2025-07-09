@@ -9,6 +9,7 @@ const cors = require('cors')
 const winston = require('winston')
 const expressWinston = require('express-winston')
 // const apicache = require('apicache')
+import { BASEPREFIX } from 'src/constants/envs'
 import { getDerefedSwagger } from 'src/endpoints/swagger/getDerefedSwagger/getDerefedSwagger'
 import { getYamlValuesByFromValues, getFormValuesByYaml } from 'src/endpoints/forms/formSync/formSync'
 import { prepareFormProps } from 'src/endpoints/forms/formPrepare/formPrepare'
@@ -66,18 +67,18 @@ app.use(
 
 /* swagger */
 // app.get('/openapi-bff/swagger/swagger/:clusterName', cache('5 minutes'), getDerefedSwagger)
-app.get('/openapi-bff/swagger/swagger/:clusterName', getDerefedSwagger)
+app.get(`${BASEPREFIX}/openapi-bff/swagger/swagger/:clusterName`, getDerefedSwagger)
 
 /* forms */
-app.post('/openapi-bff/forms/formSync/getYamlValuesByFromValues', getYamlValuesByFromValues)
-app.post('/openapi-bff/forms/formSync/getFormValuesByYaml', getFormValuesByYaml)
-app.post('/openapi-bff/forms/formPrepare/prepareFormProps', prepareFormProps)
+app.post(`${BASEPREFIX}/openapi-bff/forms/formSync/getYamlValuesByFromValues`, getYamlValuesByFromValues)
+app.post(`${BASEPREFIX}/openapi-bff/forms/formSync/getFormValuesByYaml`, getFormValuesByYaml)
+app.post(`${BASEPREFIX}/openapi-bff/forms/formPrepare/prepareFormProps`, prepareFormProps)
 
 /* scopes */
-app.post('/openapi-bff/scopes/checkScopes/checkIfApiNamespaceScoped', checkIfApiNamespaceScoped)
-app.post('/openapi-bff/scopes/checkScopes/checkIfBuiltInNamespaceScoped', checkIfBuiltInNamespaceScoped)
-app.post('/openapi-bff/scopes/filterScopes/filterIfApiNamespaceScoped', filterIfApiNamespaceScoped)
-app.post('/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespaceScoped', filterIfBuiltInNamespaceScoped)
+app.post(`${BASEPREFIX}/openapi-bff/scopes/checkScopes/checkIfApiNamespaceScoped`, checkIfApiNamespaceScoped)
+app.post(`${BASEPREFIX}/openapi-bff/scopes/checkScopes/checkIfBuiltInNamespaceScoped`, checkIfBuiltInNamespaceScoped)
+app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfApiNamespaceScoped`, filterIfApiNamespaceScoped)
+app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespaceScoped`, filterIfBuiltInNamespaceScoped)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at port: ${port}`)
