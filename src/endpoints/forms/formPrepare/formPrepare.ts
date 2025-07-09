@@ -11,12 +11,14 @@ import { getTokenFromCookie } from 'src/utils/getTokenFromCookie'
 export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res) => {
   try {
     const bearerToken = getTokenFromCookie(req)
+    const cookies = req.headers.cookie
 
     const { data: formsOverridesData } = await userKubeApi.get<TFormsOverridesData>(
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
       {
         headers: {
           Authorization: `Bearer ${bearerToken}`,
+          Cookie: cookies,
           'Content-Type': 'application/json',
         },
       },
@@ -27,6 +29,7 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
       {
         headers: {
           Authorization: `Bearer ${bearerToken}`,
+          Cookie: cookies,
           'Content-Type': 'application/json',
         },
       },
@@ -35,6 +38,7 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
     const { data: namespacesData } = await userKubeApi.get<TBuiltinResources>(`${KUBE_API_URL}/api/v1/namespaces`, {
       headers: {
         Authorization: `Bearer ${bearerToken}`,
+        Cookie: cookies,
         'Content-Type': 'application/json',
       },
     })
