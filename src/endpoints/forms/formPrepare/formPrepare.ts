@@ -6,19 +6,20 @@ import { TBuiltinResources } from 'src/localTypes/k8s'
 import { KUBE_API_URL, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
 import { userKubeApi } from 'src/constants/httpAgent'
 import { prepare } from './utils/prepare'
-import { getTokenFromCookie } from 'src/utils/getTokenFromCookie'
+// import { getTokenFromCookie } from 'src/utils/getTokenFromCookie'
 
 export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res) => {
   try {
-    const bearerToken = getTokenFromCookie(req)
-    const cookies = req.headers.cookie
+    // const bearerToken = getTokenFromCookie(req)
+    // const cookies = req.headers.cookie
 
     const { data: formsOverridesData } = await userKubeApi.get<TFormsOverridesData>(
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
       {
         headers: {
-          Authorization: `Bearer ${bearerToken}`,
-          Cookie: cookies,
+          // Authorization: `Bearer ${bearerToken}`,
+          // Cookie: cookies,
+          ...req.headers,
           'Content-Type': 'application/json',
         },
       },
@@ -28,8 +29,9 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsprefills`,
       {
         headers: {
-          Authorization: `Bearer ${bearerToken}`,
-          Cookie: cookies,
+          // Authorization: `Bearer ${bearerToken}`,
+          // Cookie: cookies,
+          ...req.headers,
           'Content-Type': 'application/json',
         },
       },
@@ -37,8 +39,9 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
 
     const { data: namespacesData } = await userKubeApi.get<TBuiltinResources>(`${KUBE_API_URL}/api/v1/namespaces`, {
       headers: {
-        Authorization: `Bearer ${bearerToken}`,
-        Cookie: cookies,
+        // Authorization: `Bearer ${bearerToken}`,
+        // Cookie: cookies,
+        ...req.headers,
         'Content-Type': 'application/json',
       },
     })
