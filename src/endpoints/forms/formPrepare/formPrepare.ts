@@ -5,17 +5,16 @@ import { TPrepareFormReq, TPrepareFormRes } from 'src/localTypes/endpoints/forms
 import { TFormsOverridesData, TFormsPrefillsData } from 'src/localTypes/formExtensions'
 import { TBuiltinResources } from 'src/localTypes/k8s'
 import { KUBE_API_URL, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
-import { httpsAgentUser } from 'src/constants/httpAgent'
+import { userKubeApi } from 'src/constants/httpAgent'
 import { prepare } from './utils/prepare'
 
 export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res) => {
   try {
     const cookies = req.headers.cookie
 
-    const { data: formsOverridesData } = await axios.get<TFormsOverridesData>(
+    const { data: formsOverridesData } = await userKubeApi.get<TFormsOverridesData>(
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
       {
-        httpsAgent: httpsAgentUser,
         headers: {
           Cookie: cookies,
           'User-Agent': req.headers['user-agent'],
@@ -23,10 +22,9 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
       },
     )
 
-    const { data: formsPrefillsData } = await axios.get<TFormsPrefillsData>(
+    const { data: formsPrefillsData } = await userKubeApi.get<TFormsPrefillsData>(
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsprefills`,
       {
-        httpsAgent: httpsAgentUser,
         headers: {
           Cookie: cookies,
           'User-Agent': req.headers['user-agent'],
@@ -34,8 +32,7 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
       },
     )
 
-    const { data: namespacesData } = await axios.get<TBuiltinResources>(`${KUBE_API_URL}/api/v1/namespaces`, {
-      httpsAgent: httpsAgentUser,
+    const { data: namespacesData } = await userKubeApi.get<TBuiltinResources>(`${KUBE_API_URL}/api/v1/namespaces`, {
       headers: {
         Cookie: cookies,
         'User-Agent': req.headers['user-agent'],
