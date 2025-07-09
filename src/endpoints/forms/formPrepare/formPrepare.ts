@@ -13,13 +13,16 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
     // const bearerToken = getTokenFromCookie(req)
     // const cookies = req.headers.cookie
 
+    const filteredHeaders = { ...req.headers }
+    delete filteredHeaders['host'] // Avoid passing internal host header
+
     const { data: formsOverridesData } = await userKubeApi.get<TFormsOverridesData>(
       `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
       {
         headers: {
           // Authorization: `Bearer ${bearerToken}`,
           // Cookie: cookies,
-          ...req.headers,
+          ...filteredHeaders,
           'Content-Type': 'application/json',
         },
       },
@@ -31,7 +34,7 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
         headers: {
           // Authorization: `Bearer ${bearerToken}`,
           // Cookie: cookies,
-          ...req.headers,
+          ...filteredHeaders,
           'Content-Type': 'application/json',
         },
       },
@@ -41,7 +44,7 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
       headers: {
         // Authorization: `Bearer ${bearerToken}`,
         // Cookie: cookies,
-        ...req.headers,
+        ...filteredHeaders,
         'Content-Type': 'application/json',
       },
     })
