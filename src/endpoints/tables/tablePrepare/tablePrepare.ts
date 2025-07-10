@@ -34,7 +34,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       customizationId: req.body.customizationId,
     })
 
-    const additionalPrinterColumns: TAdditionalPrinterColumns = [
+    const additionalPrinterColumns: TAdditionalPrinterColumns = req.body.forceDefaultAdditionalPrinterColumns || [
       {
         name: 'Name',
         type: 'string',

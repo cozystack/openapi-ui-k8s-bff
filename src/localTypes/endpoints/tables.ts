@@ -1,6 +1,7 @@
 import { THeaders } from './common'
 import { TJSON } from '../JSON'
 import {
+  TAdditionalPrinterColumns,
   TAdditionalPrinterColumnsUndefinedValues,
   TAdditionalPrinterColumnsTrimLengths,
   TAdditionalPrinterColumnsColWidths,
@@ -10,6 +11,7 @@ export type TPrepareTableReq = {
   body: {
     customizationId?: string
     tableMappingsReplaceValues?: Record<string, string | undefined>
+    forceDefaultAdditionalPrinterColumns?: TAdditionalPrinterColumns
 
     dataItems: TJSON[]
     resourceSchema?: TJSON
