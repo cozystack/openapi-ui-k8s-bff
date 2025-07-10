@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { TPrepareFormReq, TPrepareFormRes } from 'src/localTypes/endpoints/forms'
 import { TFormsOverridesData, TFormsPrefillsData } from 'src/localTypes/formExtensions'
 import { TBuiltinResources } from 'src/localTypes/k8s'
-import { KUBE_API_URL, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
+import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
 import { userKubeApi } from 'src/constants/httpAgent'
 import { prepare } from './utils/prepare'
 // import { getTokenFromCookie } from 'src/utils/getTokenFromCookie'
@@ -17,34 +17,34 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
     delete filteredHeaders['host'] // Avoid passing internal host header
 
     const { data: formsOverridesData } = await userKubeApi.get<TFormsOverridesData>(
-      `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
+      `/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsoverrides`,
       {
         headers: {
           // Authorization: `Bearer ${bearerToken}`,
           // Cookie: cookies,
-          ...filteredHeaders,
+          ...(DEVELOPMENT ? {} : filteredHeaders),
           'Content-Type': 'application/json',
         },
       },
     )
 
     const { data: formsPrefillsData } = await userKubeApi.get<TFormsPrefillsData>(
-      `${KUBE_API_URL}/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsprefills`,
+      `/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/customformsprefills`,
       {
         headers: {
           // Authorization: `Bearer ${bearerToken}`,
           // Cookie: cookies,
-          ...filteredHeaders,
+          ...(DEVELOPMENT ? {} : filteredHeaders),
           'Content-Type': 'application/json',
         },
       },
     )
 
-    const { data: namespacesData } = await userKubeApi.get<TBuiltinResources>(`${KUBE_API_URL}/api/v1/namespaces`, {
+    const { data: namespacesData } = await userKubeApi.get<TBuiltinResources>(`/api/v1/namespaces`, {
       headers: {
         // Authorization: `Bearer ${bearerToken}`,
         // Cookie: cookies,
-        ...filteredHeaders,
+        ...(DEVELOPMENT ? {} : filteredHeaders),
         'Content-Type': 'application/json',
       },
     })
