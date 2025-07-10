@@ -13,6 +13,7 @@ import { BASEPREFIX } from 'src/constants/envs'
 import { getDerefedSwagger } from 'src/endpoints/swagger/getDerefedSwagger/getDerefedSwagger'
 import { getYamlValuesByFromValues, getFormValuesByYaml } from 'src/endpoints/forms/formSync/formSync'
 import { prepareFormProps } from 'src/endpoints/forms/formPrepare/formPrepare'
+import { prepareTableProps } from 'src/endpoints/tables/tablePrepare/tablePrepare'
 import { checkIfApiNamespaceScoped, checkIfBuiltInNamespaceScoped } from 'src/endpoints/scopes/checkScopes/checkScopes'
 import {
   filterIfApiNamespaceScoped,
@@ -73,6 +74,9 @@ app.get(`${BASEPREFIX}/openapi-bff/swagger/swagger/:clusterName`, getDerefedSwag
 app.post(`${BASEPREFIX}/openapi-bff/forms/formSync/getYamlValuesByFromValues`, getYamlValuesByFromValues)
 app.post(`${BASEPREFIX}/openapi-bff/forms/formSync/getFormValuesByYaml`, getFormValuesByYaml)
 app.post(`${BASEPREFIX}/openapi-bff/forms/formPrepare/prepareFormProps`, prepareFormProps)
+
+/* tables */
+app.post(`${BASEPREFIX}/openapi-bff/tables/tablePrepare/prepareTableProps`, prepareTableProps)
 
 /* scopes */
 app.post(`${BASEPREFIX}/openapi-bff/scopes/checkScopes/checkIfApiNamespaceScoped`, checkIfApiNamespaceScoped)
