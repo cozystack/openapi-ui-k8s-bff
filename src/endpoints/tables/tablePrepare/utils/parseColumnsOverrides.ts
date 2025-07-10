@@ -31,14 +31,11 @@ export const parseColumnsOverrides = ({
 
   const specificCustomOverrides = columnsOverridesData?.items.find(
     item =>
-      typeof item === 'object' &&
-      !Array.isArray(item) &&
-      item !== null &&
       item.spec &&
       typeof item.spec === 'object' &&
       !Array.isArray(item.spec) &&
       item.spec !== null &&
-      typeof item.spec.overrideType === 'string' &&
+      typeof item.spec.id === 'string' &&
       item.spec.id === customizationId,
   )
 
