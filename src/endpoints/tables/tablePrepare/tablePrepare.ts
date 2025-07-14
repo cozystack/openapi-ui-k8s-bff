@@ -7,7 +7,6 @@ import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/env
 import { userKubeApi } from 'src/constants/httpAgent'
 import { parseColumnsOverrides } from './utils/parseColumnsOverrides'
 import { prepareTableMappings } from './utils/prepareTableMappings'
-import { prepare } from './utils/prepare'
 
 export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, res) => {
   try {
@@ -68,19 +67,11 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
           })
         : undefined
 
-    const { dataSource, columns } = prepare({
-      dataItems: req.body.dataItems,
-      resourceSchema: req.body.resourceSchema,
-      dataForControls: req.body.dataForControls,
-      additionalPrinterColumns: ensuredCustomOverrides || additionalPrinterColumns,
-    })
-
     const result: TPrepareTableRes = {
+      additionalPrinterColumns: ensuredCustomOverrides || additionalPrinterColumns,
       additionalPrinterColumnsUndefinedValues: ensuredCustomOverridesUndefinedValues,
       additionalPrinterColumnsTrimLengths: ensuredCustomOverridesTrimLengths,
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
-      dataSource,
-      columns,
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
     }
