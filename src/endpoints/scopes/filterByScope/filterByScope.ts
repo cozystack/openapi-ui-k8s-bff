@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express'
-import { getClusterSwagger } from 'src/cache'
+import { getClusterSwaggerPaths } from 'src/cache'
 import {
   TFilterIfApiInstanceNamespaceScopedReq,
   TFilterIfApiInstanceNamespaceScopedRes,
@@ -12,12 +12,12 @@ import { filterApiResources } from './utils/filterApiResources'
 export const filterIfApiNamespaceScoped: RequestHandler = async (req: TFilterIfApiInstanceNamespaceScopedReq, res) => {
   try {
     const { clusterName, ...rest } = req.body
-    const swagger = await getClusterSwagger(clusterName)
-    if (!swagger) {
+    const swaggerPaths = await getClusterSwaggerPaths()
+    if (!swaggerPaths) {
       return res.status(500).json('No swagger')
     }
 
-    const result: TFilterIfApiInstanceNamespaceScopedRes = filterApiResources({ swagger, ...rest })
+    const result: TFilterIfApiInstanceNamespaceScopedRes = filterApiResources({ swaggerPaths, ...rest })
     return res.json(result)
   } catch (error) {
     console.error('Error getting dereferenced Swagger:', error)
@@ -31,13 +31,13 @@ export const filterIfBuiltInNamespaceScoped: RequestHandler = async (
 ) => {
   try {
     const { clusterName, ...rest } = req.body
-    const swagger = await getClusterSwagger(clusterName)
-    if (!swagger) {
+    const swaggerPaths = await getClusterSwaggerPaths()
+    if (!swaggerPaths) {
       return res.status(500).json('No swagger')
     }
 
     const result: TFilterIfBuiltInInstanceNamespaceScopedRes = filterBuiltinResources({
-      swagger,
+      swaggerPaths,
       ...rest,
     })
     return res.json(result)

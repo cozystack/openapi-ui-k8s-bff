@@ -5,15 +5,15 @@ import { checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 export const filterBuiltinResources = ({
   namespace,
   data,
-  swagger,
+  swaggerPaths,
 }: {
   namespace?: string
   data?: TBuiltinResourceTypeList
-  swagger: OpenAPIV2.Document
+  swaggerPaths: string[]
 }): TBuiltinResourceTypeList['resources'] | undefined => {
   return namespace
     ? data?.resources?.filter(
-        ({ name }) => checkIfBuiltInInstanceNamespaceScoped({ typeName: name, swagger }).isNamespaceScoped,
+        ({ name }) => checkIfBuiltInInstanceNamespaceScoped({ typeName: name, swaggerPaths }).isNamespaceScoped,
       )
     : data?.resources
 }

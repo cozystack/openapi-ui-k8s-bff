@@ -4,10 +4,10 @@ import { TJSON } from 'src/localTypes/JSON'
 import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 
 export const getSwaggerPathAndIsNamespaceScoped = ({
-  swagger,
+  swaggerPaths,
   data,
 }: {
-  swagger: OpenAPIV2.Document
+  swaggerPaths: string[]
   data:
     | {
         type: 'builtin'
@@ -30,7 +30,7 @@ export const getSwaggerPathAndIsNamespaceScoped = ({
   if (data.type === 'builtin') {
     const { isNamespaceScoped } = checkIfBuiltInInstanceNamespaceScoped({
       typeName: data.typeName,
-      swagger,
+      swaggerPaths,
     })
     if (isNamespaceScoped) {
       isNamespaced = true
@@ -41,7 +41,7 @@ export const getSwaggerPathAndIsNamespaceScoped = ({
       apiGroup: data.apiGroup,
       apiVersion: data.apiVersion,
       typeName: data.typeName,
-      swagger,
+      swaggerPaths,
     })
     if (isNamespaceScoped) {
       isNamespaced = true

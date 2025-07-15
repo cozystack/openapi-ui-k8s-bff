@@ -4,8 +4,7 @@ import { TGetDerefedSwaggerRes } from 'src/localTypes/endpoints/swagger'
 
 export const getDerefedSwagger: RequestHandler = async (req, res) => {
   try {
-    const { clusterName } = req.params
-    const swagger: TGetDerefedSwaggerRes = await getClusterSwagger(clusterName)
+    const swagger: TGetDerefedSwaggerRes = await getClusterSwagger()
 
     return res.json(swagger)
   } catch (error) {

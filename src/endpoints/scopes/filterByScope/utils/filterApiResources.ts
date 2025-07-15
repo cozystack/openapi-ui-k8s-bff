@@ -7,18 +7,18 @@ export const filterApiResources = ({
   data,
   apiGroup,
   apiVersion,
-  swagger,
+  swaggerPaths,
 }: {
   namespace?: string
   data?: TApiGroupResourceTypeList
   apiGroup: string
   apiVersion: string
-  swagger: OpenAPIV2.Document
+  swaggerPaths: string[]
 }): TApiGroupResourceTypeList['resources'] | undefined => {
   return namespace
     ? data?.resources.filter(
         ({ name }) =>
-          checkIfApiInstanceNamespaceScoped({ typeName: name, apiGroup, apiVersion, swagger }).isNamespaceScoped,
+          checkIfApiInstanceNamespaceScoped({ typeName: name, apiGroup, apiVersion, swaggerPaths }).isNamespaceScoped,
       )
     : data?.resources
 }

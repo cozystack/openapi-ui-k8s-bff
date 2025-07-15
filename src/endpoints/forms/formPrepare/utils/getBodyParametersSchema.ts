@@ -2,10 +2,10 @@ import _ from 'lodash'
 import { OpenAPIV2 } from 'openapi-types'
 
 export const getBodyParametersSchema = ({
-  swagger,
+  swaggerPathValue,
   swaggerPath,
 }: {
-  swagger: OpenAPIV2.Document
+  swaggerPathValue?: OpenAPIV2.PathItemObject
   swaggerPath: string
 }): {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,7 +13,7 @@ export const getBodyParametersSchema = ({
   kindName?: string
   error?: string
 } => {
-  const postData = swagger?.paths?.[swaggerPath]?.post
+  const postData = swaggerPathValue?.post
 
   if (!postData) {
     const error = `No post data for ${swaggerPath}`

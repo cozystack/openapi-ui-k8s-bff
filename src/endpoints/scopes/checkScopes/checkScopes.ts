@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express'
-import { getClusterSwagger } from 'src/cache'
+import { getClusterSwaggerPaths } from 'src/cache'
 import { checkIfApiInstanceNamespaceScoped, checkIfBuiltInInstanceNamespaceScoped } from 'src/utils/checkScope'
 import {
   TCheckIfApiInstanceNamespaceScopedReq,
@@ -11,12 +11,12 @@ import {
 export const checkIfApiNamespaceScoped: RequestHandler = async (req: TCheckIfApiInstanceNamespaceScopedReq, res) => {
   try {
     const { clusterName, ...rest } = req.body
-    const swagger = await getClusterSwagger(clusterName)
-    if (!swagger) {
-      return res.status(500).json('No swagger')
+    const swaggerPaths = await getClusterSwaggerPaths()
+    if (!swaggerPaths) {
+      return res.status(500).json('No swagger paths')
     }
 
-    const result: TCheckIfApiInstanceNamespaceScopedRes = checkIfApiInstanceNamespaceScoped({ swagger, ...rest })
+    const result: TCheckIfApiInstanceNamespaceScopedRes = checkIfApiInstanceNamespaceScoped({ swaggerPaths, ...rest })
     return res.json(result)
   } catch (error) {
     console.error('Error getting dereferenced Swagger:', error)
@@ -30,13 +30,13 @@ export const checkIfBuiltInNamespaceScoped: RequestHandler = async (
 ) => {
   try {
     const { clusterName, ...rest } = req.body
-    const swagger = await getClusterSwagger(clusterName)
-    if (!swagger) {
-      return res.status(500).json('No swagger')
+    const swaggerPaths = await getClusterSwaggerPaths()
+    if (!swaggerPaths) {
+      return res.status(500).json('No swagger paths')
     }
 
     const result: TCheckIfBuiltInInstanceNamespaceScopedRes = checkIfBuiltInInstanceNamespaceScoped({
-      swagger,
+      swaggerPaths,
       ...rest,
     })
     return res.json(result)
