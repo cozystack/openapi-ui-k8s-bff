@@ -3,8 +3,7 @@ import { getClusterSwagger } from 'src/cache'
 
 export const getDerefedSwagger: RequestHandler = async (req, res) => {
   try {
-    const { clusterName } = req.params
-    const swagger = await getClusterSwagger(clusterName)
+    const swagger = await getClusterSwagger()
 
     return res.json(swagger)
   } catch (error) {

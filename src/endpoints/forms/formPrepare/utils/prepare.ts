@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getClusterSwagger } from 'src/cache'
+import { getClusterSwaggerPathByName, getClusterSwaggerPaths } from 'src/cache'
 import { TPrepareForm } from 'src/localTypes/forms'
 import { TPrepareFormRes } from 'src/localTypes/endpoints/forms'
 import { getSwaggerPathAndIsNamespaceScoped } from './getSwaggerPathAndIsNamespaceScoped'
@@ -16,12 +16,12 @@ export const prepare = async ({
   customizationId,
   namespacesData,
 }: TPrepareForm): Promise<TPrepareFormRes> => {
-  const swagger = await getClusterSwagger(clusterName)
+  const swaggerPaths = await getClusterSwaggerPaths()
 
-  if (!swagger) {
+  if (!swaggerPaths) {
     return {
       result: 'error',
-      error: 'no swagger',
+      error: 'no swagger paths',
       isNamespaced: false,
       kindName: undefined,
       fallbackToManualMode: true,
@@ -29,11 +29,13 @@ export const prepare = async ({
   }
 
   const { swaggerPath, isNamespaced } = getSwaggerPathAndIsNamespaceScoped({
-    swagger,
+    swaggerPaths,
     data,
   })
 
-  const { bodyParametersSchema, kindName, error } = getBodyParametersSchema({ swagger, swaggerPath })
+  const swaggerPathValue = await getClusterSwaggerPathByName(swaggerPath)
+
+  const { bodyParametersSchema, kindName, error } = getBodyParametersSchema({ swaggerPathValue, swaggerPath })
 
   if (error) {
     return { result: 'error', error, isNamespaced, kindName, fallbackToManualMode: true }
