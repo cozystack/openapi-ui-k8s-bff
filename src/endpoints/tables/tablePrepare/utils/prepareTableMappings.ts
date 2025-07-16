@@ -9,7 +9,7 @@ export const prepareTableMappings = ({
   data: Partial<TTableMappingData>[]
   customizationId: string
   replaceValues: Record<string, string | undefined>
-}): { pathToNavigate?: string; keysToParse?: string[] } | undefined => {
+}): { pathToNavigate?: string; keysToParse?: string[]; keysToParseSecond?: string[] } | undefined => {
   const specificData = data.find(({ id }) => id === customizationId)
 
   const preparedData = {
