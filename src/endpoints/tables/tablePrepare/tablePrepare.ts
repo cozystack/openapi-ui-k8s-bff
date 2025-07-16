@@ -74,6 +74,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
+      recordKeysForNavigationSecond: tableMappingSpecific?.keysToParseSecond,
     }
 
     res.json(result)
