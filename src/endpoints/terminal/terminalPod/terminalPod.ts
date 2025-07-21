@@ -44,7 +44,8 @@ export const terminalPodWebSocket: WebsocketRequestHandler = async (ws, req) => 
       })
 
       podWs.on('message', data => {
-        ws.send(data.toString())
+        // ws.send(data.toString())
+        ws.send(JSON.stringify({ type: 'output', payload: data }))
       })
 
       podWs.on('close', () => {
@@ -56,9 +57,10 @@ export const terminalPodWebSocket: WebsocketRequestHandler = async (ws, req) => 
         console.error(`[${new Date().toISOString()}]: WebsocketPod: Pod WebSocket error:`, error)
       })
 
-      ws.on('message', (message: TMessage) => {
-        if (message.type === 'input') {
-          podWs.send(message.payload)
+      ws.on('message', message => {
+        const parsedMessage = JSON.parse(message.toString()) as TMessage
+        if (parsedMessage.type === 'input') {
+          podWs.send(Buffer.from(`\x00${parsedMessage.payload}`, 'utf8'))
         }
       })
 
