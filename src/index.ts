@@ -86,7 +86,7 @@ app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfApiNamespaceScop
 app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespaceScoped`, filterIfBuiltInNamespaceScoped)
 
 /* terminal */
-app.ws(`${BASEPREFIX}/openapi-bff/terminal/terminalPod/terminalPod`, terminalPodWebSocket)
+app.ws(`${BASEPREFIX}/openapi-bff-ws/terminal/terminalPod/terminalPod`, terminalPodWebSocket)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at port: ${port}`)
