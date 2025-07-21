@@ -13,7 +13,11 @@ export const terminalPodWebSocket: WebsocketRequestHandler = async (ws, req) => 
 
   const filteredHeaders = { ...req.headers }
   delete filteredHeaders['host'] // Avoid passing internal host header
-  delete filteredHeaders['Sec-WebSocket-Accept'] // Avoid passing
+  Object.keys(filteredHeaders).forEach(key => {
+    if (key.startsWith('sec-websocket-')) {
+      delete filteredHeaders[key]
+    }
+  })
 
   try {
     const handleInit = (message: TMessage) => {
