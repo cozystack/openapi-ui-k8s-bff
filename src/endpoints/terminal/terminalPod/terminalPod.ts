@@ -12,6 +12,7 @@ export const terminalPodWebSocket: WebsocketRequestHandler = async (ws, req) => 
   console.log(`[${new Date().toISOString()}]: Websocket: Client connected to WebSocket server`)
 
   const filteredHeaders = { ...req.headers }
+  delete filteredHeaders['host'] // Avoid passing internal host header
 
   try {
     const handleInit = (message: TMessage) => {
