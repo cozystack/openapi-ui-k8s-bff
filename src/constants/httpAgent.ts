@@ -21,8 +21,10 @@ if (fs.existsSync(tokenPath)) {
 
 export const httpsAgent = new https.Agent({ ca, rejectUnauthorized: DEVELOPMENT ? false : true })
 
+export const baseUrl = DEVELOPMENT ? DEV_KUBE_API_URL : KUBE_API_URL
+
 export const kubeApi: AxiosInstance = axios.create({
-  baseURL: DEVELOPMENT ? DEV_KUBE_API_URL : KUBE_API_URL,
+  baseURL: baseUrl,
   httpsAgent,
   headers: DEVELOPMENT
     ? undefined
@@ -36,7 +38,7 @@ export const kubeApi: AxiosInstance = axios.create({
 })
 
 export const userKubeApi: AxiosInstance = axios.create({
-  baseURL: DEVELOPMENT ? DEV_KUBE_API_URL : KUBE_API_URL,
+  baseURL: baseUrl,
   httpsAgent,
   // (optionally) short timeouts so your BFF fails fast if the API is unreachable
   timeout: 5_000,
