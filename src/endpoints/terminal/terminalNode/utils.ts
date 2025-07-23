@@ -1,6 +1,7 @@
 import { AxiosRequestConfig } from 'axios'
 import { userKubeApi } from 'src/constants/httpAgent'
 import { TProfileType } from './types'
+import { CONTAINER_WAITING } from './constants'
 
 export const generateRandomLetters = (): string => {
   const chars = 'abcdefghijklmnopqrstuvwxyz'
@@ -47,6 +48,8 @@ export const getPodByProfile = ({
           image: containerImage,
           imagePullPolicy: 'IfNotPresent',
           name: containerName,
+          command: ['sleep'],
+          args: ['infinity'],
           volumeMounts: [
             ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin'
               ? [
@@ -178,8 +181,9 @@ export const waitForContainerReady = async ({
 }): Promise<boolean> => {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      console.log(`Checking container ${containerName} readiness (attempt ${attempt}/${maxAttempts})`)
-      sendMessage(`Checking container ${containerName} readiness (attempt ${attempt}/${maxAttempts})`)
+      console.log(
+        `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Checking container ${containerName} readiness (attempt ${attempt}/${maxAttempts})`,
+      )
 
       const response = await userKubeApi.get<
         unknown & {
@@ -199,8 +203,10 @@ export const waitForContainerReady = async ({
       const containerStatus = pod.status?.containerStatuses?.find(status => status.name === containerName)
 
       if (!containerStatus) {
-        console.log(`Container ${containerName} not found in pod status`)
-        sendMessage(`Container ${containerName} not found in pod status`)
+        console.log(
+          `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Container ${containerName} not found in pod status`,
+        )
+        sendMessage(CONTAINER_WAITING.CONTAINER_NOT_FOUND)
         if (attempt < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, retryIntervalMs))
         }
@@ -208,23 +214,25 @@ export const waitForContainerReady = async ({
       }
 
       if (containerStatus.state?.running) {
-        console.log(`Container ${containerName} is ready after ${attempt} attempts`)
-        sendMessage(`Container ${containerName} is ready after ${attempt} attempts`)
+        console.log(
+          `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Container ${containerName} is ready after ${attempt} attempts`,
+        )
+        sendMessage(`${CONTAINER_WAITING.CONTAINER_READY} after ${attempt} attempts`)
         return true
       }
 
       console.log(
-        `Container ${containerName} not ready yet. State:`,
+        `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Container ${containerName} not ready yet. State:`,
         containerStatus.state ? Object.keys(containerStatus.state)[0] : 'unknown',
       )
-      sendMessage(`Container ${containerName} not ready yet`)
+      sendMessage(CONTAINER_WAITING.CONTAINER_NOT_READY)
 
       // Check if container has failed
       if (
         containerStatus.state?.terminated?.exitCode !== undefined &&
         containerStatus.state?.terminated?.exitCode !== 0
       ) {
-        sendMessage(`Container ${containerName} terminated with exit code ${containerStatus.state.terminated.exitCode}`)
+        sendMessage(`${CONTAINER_WAITING.CONTAINER_TERMINATED} ${containerStatus.state.terminated.exitCode}`)
         throw new Error(
           `Container ${containerName} terminated with exit code ${containerStatus.state.terminated.exitCode}`,
         )
@@ -232,24 +240,34 @@ export const waitForContainerReady = async ({
 
       if (attempt < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, retryIntervalMs))
+      } else {
+        return false
       }
     } catch (error: any) {
-      console.error(`Error checking pod status (attempt ${attempt}/${maxAttempts}):`, error.message)
-      sendMessage(`Error checking pod status (attempt ${attempt}/${maxAttempts})`)
+      console.error(
+        `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Error checking pod status (attempt ${attempt}/${maxAttempts}):`,
+        error.message,
+      )
+      // sendError(`Error checking pod status (attempt ${attempt}/${maxAttempts})`)
 
       // If it's a 404 error, the pod doesn't exist
-      if (error.response?.statusCode === 404) {
-        sendMessage(`Pod ${podName} not found in namespace ${namespace}`)
-        throw new Error(`Pod ${podName} not found in namespace ${namespace}`)
-      }
+      // if (error.response?.statusCode === 404) {
+      // sendError(`Pod ${podName} not found in namespace ${namespace}`)
+      // throw new Error(`Pod ${podName} not found in namespace ${namespace}`)
+      // }
 
       // Continue retrying for other errors until max attempts
       if (attempt < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, retryIntervalMs))
+      } else {
+        return false
       }
     }
   }
 
-  sendMessage(`Max attempts (${maxAttempts}) reached waiting for container ${containerName} to be ready`)
-  throw new Error(`Max attempts (${maxAttempts}) reached waiting for container ${containerName} to be ready`)
+  console.error(
+    `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Max attempts (${maxAttempts}) reached waiting for container ${containerName} to be ready`,
+  )
+  return false
+  // throw new Error(`Max attempts (${maxAttempts}) reached waiting for container ${containerName} to be ready`)
 }
