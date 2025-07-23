@@ -8,3 +8,4 @@ export const BASE_API_VERSION = process.env.BASE_API_VERSION
 export const BASEPREFIX = process.env.BASEPREFIX || ''
 export const DEVELOPMENT = process.env.DEVELOPMENT === 'TRUE'
 export const KUBE_API_URL = `https://${process.env.KUBERNETES_SERVICE_HOST}:${process.env.KUBERNETES_SERVICE_PORT}`
+export const DEBUG_CONTAINER_IMAGE = process.env.DEBUG_CONTAINER_IMAGE || 'no-container-image-in-env'
