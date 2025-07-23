@@ -20,6 +20,7 @@ import {
   filterIfBuiltInNamespaceScoped,
 } from 'src/endpoints/scopes/filterByScope/filterByScope'
 import { terminalPodWebSocket } from 'src/endpoints/terminal/terminalPod/terminalPod'
+import { terminalNodeWebSocket } from 'src/endpoints/terminal/terminalNode/terminalNode'
 
 dotenv.config()
 
@@ -87,6 +88,7 @@ app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespace
 
 /* terminal */
 app.ws(`${BASEPREFIX}/openapi-bff-ws/terminal/terminalPod/terminalPod`, terminalPodWebSocket)
+app.ws(`${BASEPREFIX}/openapi-bff-ws/terminal/terminalNode/terminalNode`, terminalNodeWebSocket)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at port: ${port}`)
