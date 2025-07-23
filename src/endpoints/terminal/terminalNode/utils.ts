@@ -2,6 +2,12 @@ import { AxiosRequestConfig } from 'axios'
 import { userKubeApi } from 'src/constants/httpAgent'
 import { TProfileType } from './types'
 import { CONTAINER_WAITING } from './constants'
+import { getLegacyPod } from './getLegacyPod'
+import { getGeneralPod } from './getGeneralPod'
+import { getBaselinePod } from './getBaselinePod'
+import { getNetadminPod } from './getNetadminPod'
+import { getRestrictedPod } from './getRestrictedPod'
+import { getSysadminPod } from './getSysadminPod'
 
 export const generateRandomLetters = (): string => {
   const chars = 'abcdefghijklmnopqrstuvwxyz'
@@ -25,7 +31,6 @@ export const getPodByProfile = ({
   containerImage,
   containerName,
   profile,
-  randomLetters,
 }: {
   namespace: string
   podName: string
@@ -33,134 +38,213 @@ export const getPodByProfile = ({
   containerImage: string
   containerName: string
   profile: TProfileType
-  randomLetters: string
 }): Record<string, any> => {
-  return {
-    apiVersion: 'v1',
-    kind: 'Pod',
-    metadata: {
-      name: podName,
+  if (profile === 'legacy') {
+    return getLegacyPod({
       namespace,
-    },
-    spec: {
-      containers: [
-        {
-          image: containerImage,
-          imagePullPolicy: 'IfNotPresent',
-          name: containerName,
-          command: ['sleep'],
-          args: ['infinity'],
-          volumeMounts: [
-            ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin'
-              ? [
-                  {
-                    mountPath: '/host',
-                    name: 'host-root',
-                  },
-                ]
-              : []),
-            {
-              mountPath: '/var/run/secrets/kubernetes.io/serviceaccount',
-              name: `kube-api-access-${randomLetters}`,
-              readOnly: true,
-            },
-          ],
-        },
-      ],
+      podName,
       nodeName,
-      restartPolicy: 'Never',
-      schedulerName: 'default-scheduler',
-      volumes: [
-        ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin'
-          ? [
-              {
-                hostPath: {
-                  path: '/',
-                  type: '',
-                },
-                name: 'host-root',
-              },
-            ]
-          : []),
-        {
-          name: `kube-api-access-${randomLetters}`,
-          projected: {
-            defaultMode: 420,
-            sources: [
-              {
-                serviceAccountToken: {
-                  expirationSeconds: 3607,
-                  path: 'token',
-                },
-              },
-              {
-                configMap: {
-                  items: [
-                    {
-                      key: 'ca.crt',
-                      path: 'ca.crt',
-                    },
-                  ],
-                  name: 'kube-root-ca.crt',
-                },
-              },
-              {
-                downwardAPI: {
-                  items: [
-                    {
-                      fieldRef: {
-                        apiVersion: 'v1',
-                        fieldPath: 'metadata.namespace',
-                      },
-                      path: 'namespace',
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      ],
-      ...(profile === 'restricted'
-        ? {
-            securityContext: {
-              allowPrivilegeEscalation: false,
-              capabilities: {
-                drop: ['ALL'],
-              },
-              runAsNonRoot: true,
-              seccompProfile: {
-                type: 'RuntimeDefault',
-              },
-            },
-          }
-        : {}),
-      ...(profile === 'netadmin'
-        ? {
-            securityContext: {
-              capabilities: {
-                add: ['NET_ADMIN', 'NET_RAW'],
-              },
-            },
-          }
-        : {}),
-      ...(profile === 'sysadmin'
-        ? {
-            securityContext: {
-              privileged: true,
-            },
-          }
-        : {}),
-    },
-    ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin' || profile === 'netadmin'
-      ? {
-          hostIPC: true,
-          hostNetwork: true,
-          hostPID: true,
-        }
-      : {}),
+      containerImage,
+      containerName,
+    })
   }
+  if (profile === 'general') {
+    return getGeneralPod({
+      namespace,
+      podName,
+      nodeName,
+      containerImage,
+      containerName,
+    })
+  }
+  if (profile === 'baseline') {
+    return getBaselinePod({
+      namespace,
+      podName,
+      nodeName,
+      containerImage,
+      containerName,
+    })
+  }
+  if (profile === 'netadmin') {
+    return getNetadminPod({
+      namespace,
+      podName,
+      nodeName,
+      containerImage,
+      containerName,
+    })
+  }
+  if (profile === 'restricted') {
+    return getRestrictedPod({
+      namespace,
+      podName,
+      nodeName,
+      containerImage,
+      containerName,
+    })
+  }
+  if (profile === 'sysadmin') {
+    return getSysadminPod({
+      namespace,
+      podName,
+      nodeName,
+      containerImage,
+      containerName,
+    })
+  }
+  return getBaselinePod({
+    namespace,
+    podName,
+    nodeName,
+    containerImage,
+    containerName,
+  })
 }
+
+// export const getPodByProfile = ({
+//   namespace,
+//   podName,
+//   nodeName,
+//   containerImage,
+//   containerName,
+//   profile,
+//   randomLetters,
+// }: {
+//   namespace: string
+//   podName: string
+//   nodeName: string
+//   containerImage: string
+//   containerName: string
+//   profile: TProfileType
+//   randomLetters: string
+// }): Record<string, any> => {
+//   return {
+//     apiVersion: 'v1',
+//     kind: 'Pod',
+//     metadata: {
+//       name: podName,
+//       namespace,
+//     },
+//     spec: {
+//       containers: [
+//         {
+//           image: containerImage,
+//           imagePullPolicy: 'IfNotPresent',
+//           name: containerName,
+//           command: ['sleep'],
+//           args: ['infinity'],
+//           volumeMounts: [
+//             ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin'
+//               ? [
+//                   {
+//                     mountPath: '/host',
+//                     name: 'host-root',
+//                   },
+//                 ]
+//               : []),
+//             {
+//               mountPath: '/var/run/secrets/kubernetes.io/serviceaccount',
+//               name: `kube-api-access-${randomLetters}`,
+//               readOnly: true,
+//             },
+//           ],
+//         },
+//       ],
+//       nodeName,
+//       restartPolicy: 'Never',
+//       schedulerName: 'default-scheduler',
+//       volumes: [
+//         ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin'
+//           ? [
+//               {
+//                 hostPath: {
+//                   path: '/',
+//                   type: '',
+//                 },
+//                 name: 'host-root',
+//               },
+//             ]
+//           : []),
+//         {
+//           name: `kube-api-access-${randomLetters}`,
+//           projected: {
+//             defaultMode: 420,
+//             sources: [
+//               {
+//                 serviceAccountToken: {
+//                   expirationSeconds: 3607,
+//                   path: 'token',
+//                 },
+//               },
+//               {
+//                 configMap: {
+//                   items: [
+//                     {
+//                       key: 'ca.crt',
+//                       path: 'ca.crt',
+//                     },
+//                   ],
+//                   name: 'kube-root-ca.crt',
+//                 },
+//               },
+//               {
+//                 downwardAPI: {
+//                   items: [
+//                     {
+//                       fieldRef: {
+//                         apiVersion: 'v1',
+//                         fieldPath: 'metadata.namespace',
+//                       },
+//                       path: 'namespace',
+//                     },
+//                   ],
+//                 },
+//               },
+//             ],
+//           },
+//         },
+//       ],
+//       ...(profile === 'restricted'
+//         ? {
+//             securityContext: {
+//               allowPrivilegeEscalation: false,
+//               capabilities: {
+//                 drop: ['ALL'],
+//               },
+//               runAsNonRoot: true,
+//               seccompProfile: {
+//                 type: 'RuntimeDefault',
+//               },
+//             },
+//           }
+//         : {}),
+//       ...(profile === 'netadmin'
+//         ? {
+//             securityContext: {
+//               capabilities: {
+//                 add: ['NET_ADMIN', 'NET_RAW'],
+//               },
+//             },
+//           }
+//         : {}),
+//       ...(profile === 'sysadmin'
+//         ? {
+//             securityContext: {
+//               privileged: true,
+//             },
+//           }
+//         : {}),
+//     },
+//     ...(profile === 'legacy' || profile === 'general' || profile === 'sysadmin' || profile === 'netadmin'
+//       ? {
+//           hostIPC: true,
+//           hostNetwork: true,
+//           hostPID: true,
+//         }
+//       : {}),
+//   }
+// }
 
 export const waitForContainerReady = async ({
   namespace,
