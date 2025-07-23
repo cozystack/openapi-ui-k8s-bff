@@ -140,7 +140,6 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
               containerImage: DEBUG_CONTAINER_IMAGE,
               containerName: container,
               profile,
-              randomLetters,
             }),
           },
           {
