@@ -40,7 +40,65 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
       const podName = `debugger-${nodeName}-bff-${randomLetters}`
       const container = 'debugger'
 
+      const cleanUp = async () => {
+        // STAGE III: deleting pod then namespace
+        /*
+          shutdown: SHUTDOWN_MESSAGES.SHUTDOWN
+          shutdown: SHUTDOWN_MESSAGES.POD_DELETED || shutdown: SHUTDOWN_MESSAGES.POD_DELETE_ERROR
+          shutdown: SHUTDOWN_MESSAGES.NAMESPACE_DELETED || shutdown: SHUTDOWN_MESSAGES.NAMESPACE_DELETE_ERROR
+        */
+        ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.SHUTDOWN }))
+        console.log(`[${new Date().toISOString()}]: Websocket: onClose: Deleting pod then namespace`)
+        return await userKubeApi
+          .delete(`/api/v1/namespaces/${namespaceName}/pods/${podName}`, {
+            headers: {
+              ...(DEVELOPMENT ? {} : filteredHeaders),
+              'Content-Type': 'application/json',
+            },
+          })
+          .then(() => {
+            console.log(`[${new Date().toISOString()}]: Websocket: onClose: Pod deleted`)
+            ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.POD_DELETED }))
+            userKubeApi
+              .delete(`/api/v1/namespaces/${namespaceName}`, {
+                headers: {
+                  ...(DEVELOPMENT ? {} : filteredHeaders),
+                  'Content-Type': 'application/json',
+                },
+              })
+              .then(() => {
+                console.log(`[${new Date().toISOString()}]: Websocket: onClose: Namespace deleted`)
+                ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.NAMESPACE_DELETED }))
+                return true
+              })
+              .catch(error => {
+                console.error(`[${new Date().toISOString()}]: Websocket: onClose: Namespace not deleted: ${error}`)
+                ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.NAMESPACE_DELETE_ERROR }))
+                return false
+              })
+          })
+          .catch(error => {
+            console.error(`[${new Date().toISOString()}]: Websocket: onClose: Pod not deleted: ${error}`)
+            ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.POD_DELETE_ERROR }))
+          })
+          .finally(() => {
+            console.log(`[${new Date().toISOString()}]: Websocket: Client disconnected`)
+          })
+      }
+
       // STAGE I: warmup
+      /*
+        warmup: NAMESPACE_CREATING
+        warmup: NAMESPACE_CREATED || NAMESPACE_CREATE_ERROR
+        warmup: POD_CREATING
+        warmup: POD_CREATED || POD_CREATE_ERROR
+        warmup: CONTAINER_WAITING_READY
+        containerWaiting: CONTAINER_READY ||
+                          CONTAINER_NOT_FOUND ||
+                          CONTAINER_NOT_READY ||
+                          CONTAINER_TERMINATED
+        warmup: CONTAINER_READY || CONTAINER_NEVER_READY
+      */
       ws.send(JSON.stringify({ type: 'warmup', payload: WARMUP_MESSAGES.NAMESPACE_CREATING }))
 
       const createNamespace = await userKubeApi
@@ -103,6 +161,7 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
         })
 
       if (!createPod) {
+        await cleanUp()
         ws.close()
         return
       }
@@ -113,7 +172,7 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
         namespace: namespaceName,
         podName,
         containerName: container,
-        maxAttempts: 15,
+        maxAttempts: 25,
         retryIntervalMs: 5000,
         headers: {
           ...(DEVELOPMENT ? {} : filteredHeaders),
@@ -124,9 +183,12 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
 
       if (!isReady) {
         ws.send(JSON.stringify({ type: 'warmup', payload: WARMUP_MESSAGES.CONTAINER_NEVER_READY }))
+        await cleanUp()
         ws.close()
         return
       }
+
+      ws.send(JSON.stringify({ type: 'warmup', payload: WARMUP_MESSAGES.CONTAINER_READY }))
 
       // STAGE II: default pod terminal logic
       const execUrl = `${baseUrl}/api/v1/namespaces/${namespaceName}/pods/${podName}/exec?command=%2Fbin%2Fsh&container=${container}&stdin=true&stdout=true&tty=true`
@@ -153,8 +215,9 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
         ws.send(JSON.stringify({ type: 'output', payload: data }))
       })
 
-      podWs.on('close', () => {
+      podWs.on('close', async () => {
         console.log(`[${new Date().toISOString()}]: WebsocketPod: Disconnected from pod terminal`)
+        await cleanUp()
         ws.close()
       })
 
@@ -162,56 +225,23 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
         console.error(`[${new Date().toISOString()}]: WebsocketPod: Pod WebSocket error:`, error)
       })
 
-      ws.on('message', message => {
+      ws.on('message', async message => {
         const parsedMessage = JSON.parse(message.toString()) as TMessage
         if (parsedMessage.type === 'input') {
           podWs.send(Buffer.from(`\x00${parsedMessage.payload}`, 'utf8'))
         }
         // shutdown message
         if (parsedMessage.type === 'shutdown') {
+          await cleanUp()
           ws.close()
         }
       })
 
-      ws.on('close', () => {
+      ws.on('close', async () => {
         ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.SHUTDOWN }))
 
         podWs.close()
-
-        // STAGE III: deleting pod then namespace
-        userKubeApi
-          .delete(`/api/v1/namespaces/${namespaceName}/pods/${podName}`, {
-            headers: {
-              ...(DEVELOPMENT ? {} : filteredHeaders),
-              'Content-Type': 'application/json',
-            },
-          })
-          .then(() => {
-            ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.POD_DELETED }))
-            userKubeApi
-              .delete(`/api/v1/namespaces/${namespaceName}`, {
-                headers: {
-                  ...(DEVELOPMENT ? {} : filteredHeaders),
-                  'Content-Type': 'application/json',
-                },
-              })
-              .then(() => {
-                ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.NAMESPACE_DELETED }))
-                return true
-              })
-              .catch(error => {
-                console.error(`[${new Date().toISOString()}]: Websocket: onClose: Namespace not deleted: ${error}`)
-                ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.NAMESPACE_DELETE_ERROR }))
-                return false
-              })
-          })
-          .catch(error => {
-            console.error(`[${new Date().toISOString()}]: Websocket: onClose: Pod not deleted: ${error}`)
-            ws.send(JSON.stringify({ type: 'shutdown', payload: SHUTDOWN_MESSAGES.POD_DELETE_ERROR }))
-          })
-          .finally(() => {
-            console.log(`[${new Date().toISOString()}]: Websocket: Client disconnected`)
-          })
+        await cleanUp()
       })
     }
 
