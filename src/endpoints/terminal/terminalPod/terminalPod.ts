@@ -35,7 +35,14 @@ export const terminalPodWebSocket: WebsocketRequestHandler = async (ws, req) => 
       const podName = message.payload.podName
       const container = message.payload.container
 
-      const execUrl = `${baseUrl}/api/v1/namespaces/${namespace}/pods/${podName}/exec?command=%2Fbin%2Fsh&container=${container}&stdin=true&stdout=true&tty=true`
+      const wrapper = 'stty cols 999; exec /bin/sh'
+
+      const execUrl = [
+        `${baseUrl}/api/v1/namespaces/${namespace}/pods/${podName}/exec?container=${container}&stdin=true&stdout=true&tty=true`,
+        `&command=${encodeURIComponent('sh')}`,
+        `&command=${encodeURIComponent('-c')}`,
+        `&command=${encodeURIComponent(wrapper)}`,
+      ].join('')
 
       console.log(
         `[${new Date().toISOString()}]: WebsocketPod: Connecting with user headers ${JSON.stringify(

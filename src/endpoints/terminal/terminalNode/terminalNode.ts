@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import WebSocket from 'ws'
 import { WebsocketRequestHandler } from 'express-ws'
 import { DEVELOPMENT, DEBUG_CONTAINER_IMAGE } from 'src/constants/envs'
@@ -190,7 +191,14 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
       ws.send(JSON.stringify({ type: 'warmup', payload: WARMUP_MESSAGES.CONTAINER_READY }))
 
       // STAGE II: default pod terminal logic
-      const execUrl = `${baseUrl}/api/v1/namespaces/${namespaceName}/pods/${podName}/exec?command=%2Fbin%2Fsh&container=${container}&stdin=true&stdout=true&tty=true`
+      const wrapper = 'stty cols 999; exec /bin/sh'
+
+      const execUrl = [
+        `${baseUrl}/api/v1/namespaces/${namespaceName}/pods/${podName}/exec?&container=${container}&stdin=true&stdout=true&tty=true`,
+        `&command=${encodeURIComponent('sh')}`,
+        `&command=${encodeURIComponent('-c')}`,
+        `&command=${encodeURIComponent(wrapper)}`,
+      ].join('')
 
       console.log(
         `[${new Date().toISOString()}]: WebsocketPod: Connecting with user headers ${JSON.stringify(
