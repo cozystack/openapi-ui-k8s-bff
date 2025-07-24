@@ -1,6 +1,7 @@
+import WebSocket from 'ws'
 import { WebsocketRequestHandler } from 'express-ws'
 import { DEVELOPMENT } from 'src/constants/envs'
-import { startLogPolling } from './utils'
+import { httpsAgent, baseUrl } from 'src/constants/httpAgent'
 
 export type TMessage = {
   type: string
@@ -34,35 +35,58 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
       const podName = message.payload.podName
       const container = message.payload.container
 
-      const { stop } = startLogPolling(
-        {
-          namespace,
-          pod: podName,
-          container,
-          headers: {
-            ...(DEVELOPMENT ? {} : filteredHeaders),
-            'Content-Type': 'application/json',
-          },
-          pollIntervalMs: 3000, // optional, defaults to 5s
-        },
-        newLines => {
-          ws.send(JSON.stringify({ type: 'output', payload: newLines }))
-          // newLines.forEach(({ timestamp, message }) => {
-          //   console.log(`[${timestamp}] ${message}`)
-          // })
-        },
+      ws.send(JSON.stringify({ type: 'ready' }))
+
+      const params = new URLSearchParams({
+        container,
+        // timestamps: 'true',
+      })
+
+      const execUrl = `${baseUrl}/api/v1/namespaces/${namespace}/pods/${podName}/log?${params.toString()}&follow=true`
+
+      console.log(
+        `[${new Date().toISOString()}]: WebsocketPod: Connecting with user headers ${JSON.stringify(
+          DEVELOPMENT ? {} : filteredHeaders,
+        )}`,
       )
+      const podWs = new WebSocket(execUrl, {
+        agent: httpsAgent,
+        headers: {
+          ...(DEVELOPMENT ? {} : filteredHeaders),
+        },
+        protocol: 'v5.channel.k8s.io',
+        handshakeTimeout: 5_000,
+      })
+
+      podWs.on('open', () => {
+        console.log(`[${new Date().toISOString()}]: WebsocketPod: Connected to pod terminal`)
+      })
+
+      podWs.on('message', data => {
+        const text = Buffer.from(data as any).toString('utf8')
+
+        ws.send(JSON.stringify({ type: 'output', payload: text }))
+      })
+
+      podWs.on('close', () => {
+        console.log(`[${new Date().toISOString()}]: WebsocketPod: Disconnected from pod terminal`)
+        ws.close()
+      })
+
+      podWs.on('error', error => {
+        console.error(`[${new Date().toISOString()}]: WebsocketPod: Pod WebSocket error:`, error)
+      })
 
       ws.on('message', message => {
         const parsedMessage = JSON.parse(message.toString()) as TMessage
         if (parsedMessage.type === 'close') {
-          stop()
+          podWs.close()
           ws.close()
         }
       })
 
       ws.on('close', () => {
-        stop()
+        podWs.close()
         console.log(`[${new Date().toISOString()}]: Websocket: Client disconnected`)
       })
     }
