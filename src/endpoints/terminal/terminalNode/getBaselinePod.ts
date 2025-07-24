@@ -1,8 +1,3 @@
-import { AxiosRequestConfig } from 'axios'
-import { userKubeApi } from 'src/constants/httpAgent'
-import { TProfileType } from './types'
-import { CONTAINER_WAITING } from './constants'
-
 export const getBaselinePod = ({
   namespace,
   podName,
