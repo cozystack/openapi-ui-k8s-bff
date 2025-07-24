@@ -49,6 +49,10 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
           DEVELOPMENT ? {} : filteredHeaders,
         )}`,
       )
+
+      let stop = false
+      let buffer: string[] = []
+
       const podWs = new WebSocket(execUrl, {
         agent: httpsAgent,
         headers: {
@@ -64,7 +68,10 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
 
       podWs.on('message', data => {
         const text = Buffer.from(data as any).toString('utf8')
-
+        if (stop) {
+          buffer.push(text)
+          return
+        }
         ws.send(JSON.stringify({ type: 'output', payload: text }))
       })
 
@@ -79,9 +86,25 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
 
       ws.on('message', message => {
         const parsedMessage = JSON.parse(message.toString()) as TMessage
+
+        if (parsedMessage.type === 'stop') {
+          console.log(`[${new Date().toISOString()}]: WebsocketPod: Logs Paused`)
+          stop = true
+          return
+        }
+
+        if (parsedMessage.type === 'continue') {
+          console.log(`[${new Date().toISOString()}]: WebsocketPod: Logs Continue`)
+          buffer.forEach(msg => ws.send(JSON.stringify({ type: 'output', payload: msg })))
+          buffer = []
+          stop = false
+          return
+        }
+
         if (parsedMessage.type === 'close') {
           podWs.close()
           ws.close()
+          return
         }
       })
 
