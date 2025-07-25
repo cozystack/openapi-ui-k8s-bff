@@ -101,11 +101,11 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
           return
         }
 
-        if (parsedMessage.type === 'close') {
-          podWs.close()
-          ws.close()
-          return
-        }
+        // if (parsedMessage.type === 'close') {
+        //   podWs.close()
+        //   ws.close()
+        //   return
+        // }
       })
 
       ws.on('close', () => {

@@ -238,10 +238,10 @@ export const terminalNodeWebSocket: WebsocketRequestHandler = async (ws, req) =>
           podWs.send(Buffer.from(`\x00${parsedMessage.payload}`, 'utf8'))
         }
         // shutdown message
-        if (parsedMessage.type === 'shutdown') {
-          await cleanUp()
-          ws.close()
-        }
+        // if (parsedMessage.type === 'shutdown') {
+        //   await cleanUp()
+        //   ws.close()
+        // }
       })
 
       ws.on('close', async () => {
