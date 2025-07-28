@@ -9,25 +9,6 @@ export type TMessage = {
   payload: any
 }
 
-const parseLogText = (
-  text: string,
-): {
-  timestamp: Date
-  message: string
-}[] => {
-  return text
-    .split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => {
-      // Kubernetes logs with timestamps look like: "2025-07-24T12:34:56.789Z message..."
-      const firstSpace = line.indexOf(' ')
-      return {
-        timestamp: new Date(line.slice(0, firstSpace)),
-        message: line.slice(firstSpace + 1),
-      }
-    })
-}
-
 export const startLogPolling = (
   {
     url,
@@ -40,6 +21,7 @@ export const startLogPolling = (
   let prevLatestTimestamp: Date | null = null
   let latestTimestamp: Date | null = null
 
+  console.log(`[${new Date().toISOString()}]: Websocket: Using headers to fetch ${JSON.stringify(headers)}`)
   const doFetch = async () => {
     try {
       const {
@@ -76,8 +58,6 @@ export const startLogPolling = (
           const timestamp = line.slice(0, index)
           // const rest = line.slice(index + 1)
           if (prevLatestTimestamp) {
-            // console.log(new Date(timestamp))
-            // console.log(new Date(prevLatestTimestamp))
             return new Date(timestamp) > prevLatestTimestamp
           }
           return true
@@ -126,6 +106,8 @@ export const podLogsNonWsWebSocket: WebsocketRequestHandler = async (ws, req) =>
       delete filteredHeaders[key]
     }
   })
+
+  console.log(`[${new Date().toISOString()}]: Websocket: Filtered Headers: ${JSON.stringify(filteredHeaders)}`)
 
   try {
     const handleInit = async (message: TMessage) => {
