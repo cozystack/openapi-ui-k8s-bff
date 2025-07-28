@@ -106,6 +106,8 @@ export const podLogsNonWsWebSocket: WebsocketRequestHandler = async (ws, req) =>
       delete filteredHeaders[key]
     }
   })
+  delete filteredHeaders['connection']
+  delete filteredHeaders['upgrade']
 
   console.log(`[${new Date().toISOString()}]: Websocket: Filtered Headers: ${JSON.stringify(filteredHeaders)}`)
 
@@ -142,6 +144,7 @@ export const podLogsNonWsWebSocket: WebsocketRequestHandler = async (ws, req) =>
           url: execUrlNoFollow,
           headers: {
             ...(DEVELOPMENT ? {} : filteredHeaders),
+            'Content-Type': 'application/json',
           },
           pollIntervalMs: 3000, // optional, defaults to 5s
         },
