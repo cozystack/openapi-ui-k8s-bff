@@ -37,6 +37,7 @@ export const startLogPolling = (
   onNewLines: (lines: string) => void,
 ): { stop: () => void } => {
   let canceled = false
+  let prevLatestTimestamp: Date | null = null
   let latestTimestamp: Date | null = null
 
   const doFetch = async () => {
@@ -67,14 +68,29 @@ export const startLogPolling = (
         }
       })
 
+      // console.log(latestTimestamp)
+
       const initLogsWithoutTimestamps = initLogsSplitted
+        .filter(line => {
+          const index = line.indexOf(' ')
+          const timestamp = line.slice(0, index)
+          // const rest = line.slice(index + 1)
+          if (prevLatestTimestamp) {
+            // console.log(new Date(timestamp))
+            // console.log(new Date(prevLatestTimestamp))
+            return new Date(timestamp) > prevLatestTimestamp
+          }
+          return true
+        })
         .map(line => {
           const index = line.indexOf(' ')
-          // const first = line.slice(0, index)
+          // const timestamp = line.slice(0, index)
           const rest = line.slice(index + 1)
           return rest
         })
         .join('\n')
+
+      prevLatestTimestamp = latestTimestamp
 
       // Send to callback
       onNewLines(initLogsWithoutTimestamps)
