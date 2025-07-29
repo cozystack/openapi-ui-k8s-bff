@@ -34,6 +34,7 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
       const namespace = message.payload.namespace
       const podName = message.payload.podName
       const container = message.payload.container
+      const previous = message.payload.previous
 
       ws.send(JSON.stringify({ type: 'ready' }))
 
@@ -42,7 +43,9 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
         // timestamps: 'true',
       })
 
-      const execUrl = `${baseUrl}/api/v1/namespaces/${namespace}/pods/${podName}/log?${params.toString()}&follow=true`
+      const execUrl = `${baseUrl}/api/v1/namespaces/${namespace}/pods/${podName}/log?${params.toString()}&follow=true${
+        previous ? `&previous=${previous}` : ''
+      }`
 
       console.log(
         `[${new Date().toISOString()}]: WebsocketPod: Connecting with user headers ${JSON.stringify(
