@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { OpenAPIV2 } from 'openapi-types'
 import { TFormOverride } from 'src/localTypes/formExtensions'
+import { deepMerge } from 'src/utils/deepMerge'
 import { overwriteMatchingKeys } from './overwriteMatchingKeys'
 
 export const processOverride = ({
@@ -57,7 +58,7 @@ export const processOverride = ({
     } else if (specificCustomOverrides.spec.strategy === 'merge') {
       if (specificCustomOverrides.spec.schema.properties) {
         const oldPropertiesBeforeOverride = _.cloneDeep(newProperties)
-        const newPropertiesAfterOverride = _.merge(
+        const newPropertiesAfterOverride = deepMerge(
           oldPropertiesBeforeOverride,
           specificCustomOverrides.spec.schema.properties,
         )
