@@ -75,6 +75,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
       recordKeysForNavigationSecond: tableMappingSpecific?.keysToParseSecond,
+      recordKeysForNavigationThird: tableMappingSpecific?.keysToParseThird,
     }
 
     res.json(result)

@@ -25,6 +25,7 @@ export type TTableMappingData = {
   keysToParse: string[]
   pathToNavigateSecond: string
   keysToParseSecond: string[]
+  keysToParseThird: string[]
 }
 
 export type TTableMappingResource = {
