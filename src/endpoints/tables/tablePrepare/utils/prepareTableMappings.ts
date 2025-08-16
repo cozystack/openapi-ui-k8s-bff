@@ -10,7 +10,12 @@ export const prepareTableMappings = ({
   customizationId: string
   replaceValues: Record<string, string | undefined>
 }):
-  | { pathToNavigate?: string; keysToParse?: string[]; keysToParseSecond?: string[]; keysToParseThird?: string[] }
+  | {
+      pathToNavigate?: string
+      keysToParse?: string | string[]
+      keysToParseSecond?: string | string[]
+      keysToParseThird?: string | string[]
+    }
   | undefined => {
   const specificData = data.find(({ id }) => id === customizationId)
 

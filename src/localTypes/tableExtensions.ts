@@ -22,10 +22,10 @@ export type TAdditionalPrinterColumnsColWidths = {
 export type TTableMappingData = {
   id: string
   pathToNavigate: string
-  keysToParse: string[]
-  pathToNavigateSecond: string
-  keysToParseSecond: string[]
-  keysToParseThird: string[]
+  keysToParse: string | string[] // jsonpath or keys as string[]
+  // pathToNavigateSecond: string
+  keysToParseSecond: string | string[] // jsonpath or keys as string[]
+  keysToParseThird: string | string[] // jsonpath or keys as string[]
 }
 
 export type TTableMappingResource = {
