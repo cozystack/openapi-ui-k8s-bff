@@ -4,6 +4,7 @@ import { OpenAPIV2 } from 'openapi-types'
 import { kubeApi } from 'src/constants/httpAgent'
 
 const DEFAULT_TTL = 60 * 15
+const KEYS_AND_PATHS_TTL = 60 * 16
 const CHECK_PERIOD = 60 * 14
 
 export const cache = new NodeCache({ stdTTL: DEFAULT_TTL, checkperiod: CHECK_PERIOD })
@@ -13,9 +14,10 @@ async function fetchAndDerefSwagger(): Promise<OpenAPIV2.Document | undefined> {
     const { data: rawSpec } = await kubeApi.get<OpenAPIV2.Document>(`/openapi/v2`)
     const derefedSpec = await dereference(rawSpec, { dereference: { circular: 'ignore' } })
 
+    // cache.flushAll()
     cache.set('swagger', derefedSpec)
-    cache.set('swaggerPaths', Object.keys(derefedSpec.paths || {}))
-    Object.keys(derefedSpec.paths || {}).forEach(path => cache.set(path, derefedSpec?.paths[path]))
+    cache.set('swaggerPaths', Object.keys(derefedSpec.paths || {}), KEYS_AND_PATHS_TTL)
+    Object.keys(derefedSpec.paths || {}).forEach(path => cache.set(path, derefedSpec?.paths[path], KEYS_AND_PATHS_TTL))
 
     console.log(`[${new Date().toISOString()}]: Cache initialized: swagger, swaggerPaths`)
 
