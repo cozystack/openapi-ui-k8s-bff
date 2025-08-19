@@ -4,6 +4,7 @@ import {
   TAdditionalPrinterColumnsUndefinedValues,
   TAdditionalPrinterColumnsColWidths,
   TAdditionalPrinterColumnsTrimLengths,
+  TAdditionalPrinterColumnsKeyTypeProps,
 } from 'src/localTypes/tableExtensions'
 import {
   isWithAdditionalPrinterColumns,
@@ -24,6 +25,7 @@ export const parseColumnsOverrides = ({
   ensuredCustomOverridesUndefinedValues?: TAdditionalPrinterColumnsUndefinedValues
   ensuredCustomOverridesTrimLengths?: TAdditionalPrinterColumnsTrimLengths
   ensuredCustomOverridesColWidths?: TAdditionalPrinterColumnsColWidths
+  ensuredCustomOverridesKeyTypeProps?: TAdditionalPrinterColumnsKeyTypeProps
 } => {
   if (!customizationId) {
     return {}
@@ -55,10 +57,21 @@ export const parseColumnsOverrides = ({
     ? specificCustomOverrides.spec.additionalPrinterColumnsColWidths
     : undefined
 
+  const ensuredCustomOverridesKeyTypeProps: TAdditionalPrinterColumnsKeyTypeProps = {}
+  if (ensuredCustomOverrides) {
+    ensuredCustomOverrides.forEach(({ name, type, customProps }) => {
+      if (type) {
+        ensuredCustomOverridesKeyTypeProps[name] = { type, customProps }
+      }
+    })
+  }
+
   return {
     ensuredCustomOverrides,
     ensuredCustomOverridesUndefinedValues,
     ensuredCustomOverridesTrimLengths,
     ensuredCustomOverridesColWidths,
+    ensuredCustomOverridesKeyTypeProps:
+      Object.keys(ensuredCustomOverridesKeyTypeProps).length === 0 ? undefined : ensuredCustomOverridesKeyTypeProps,
   }
 }

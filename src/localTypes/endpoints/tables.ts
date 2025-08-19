@@ -1,10 +1,10 @@
 import { THeaders } from './common'
-import { TJSON } from '../JSON'
 import {
   TAdditionalPrinterColumns,
   TAdditionalPrinterColumnsUndefinedValues,
   TAdditionalPrinterColumnsTrimLengths,
   TAdditionalPrinterColumnsColWidths,
+  TAdditionalPrinterColumnsKeyTypeProps,
 } from '../tableExtensions'
 
 export type TPrepareTableReq = {
@@ -20,6 +20,7 @@ export type TPrepareTableRes = {
   additionalPrinterColumnsUndefinedValues?: TAdditionalPrinterColumnsUndefinedValues
   additionalPrinterColumnsTrimLengths?: TAdditionalPrinterColumnsTrimLengths
   additionalPrinterColumnsColWidths?: TAdditionalPrinterColumnsColWidths
+  additionalPrinterColumnsKeyTypeProps?: TAdditionalPrinterColumnsKeyTypeProps
 
   pathToNavigate?: string
   recordKeysForNavigation?: string | string[] // jsonpath or keys as string[]
