@@ -20,7 +20,9 @@ export const isWithAdditionalPrinterColumns = (
     x.spec !== null &&
     Array.isArray(x.spec.additionalPrinterColumns) &&
     x.spec.additionalPrinterColumns.every(
-      (el: any) => Object.keys(el).includes('name') && Object.keys(el).includes('jsonPath'),
+      // (el: any) => Object.keys(el).includes('name') && Object.keys(el).includes('jsonPath'),
+      // Now there is no need in names, cuz factory is supported inside and relays on full record
+      (el: any) => Object.keys(el).includes('name'),
     )
   ) {
     return true

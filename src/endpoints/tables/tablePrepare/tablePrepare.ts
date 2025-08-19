@@ -28,6 +28,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       ensuredCustomOverridesUndefinedValues,
       ensuredCustomOverridesTrimLengths,
       ensuredCustomOverridesColWidths,
+      ensuredCustomOverridesKeyTypeProps,
     } = parseColumnsOverrides({
       columnsOverridesData: customcolumnsoverrides,
       customizationId: req.body.customizationId,
@@ -72,6 +73,8 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsUndefinedValues: ensuredCustomOverridesUndefinedValues,
       additionalPrinterColumnsTrimLengths: ensuredCustomOverridesTrimLengths,
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
+      additionalPrinterColumnsKeyTypeProps: ensuredCustomOverridesKeyTypeProps,
+
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
       recordKeysForNavigationSecond: tableMappingSpecific?.keysToParseSecond,

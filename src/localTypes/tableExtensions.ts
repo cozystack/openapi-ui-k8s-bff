@@ -1,7 +1,8 @@
 export type TAdditionalPrinterColumns = {
   name: string
-  type: string
-  jsonPath: string
+  jsonPath?: string
+  type?: string
+  customProps?: unknown
 }[]
 
 export type TAdditionalPrinterColumnsUndefinedValues = {
@@ -18,6 +19,14 @@ export type TAdditionalPrinterColumnsColWidths = {
   key: string
   value: string
 }[]
+
+export type TAdditionalPrinterColumnsKeyTypeProps = Record<
+  string,
+  {
+    type: string
+    customProps?: unknown
+  }
+>
 
 export type TTableMappingData = {
   id: string
