@@ -23,6 +23,7 @@ import { terminalPodWebSocket } from 'src/endpoints/terminal/terminalPod/termina
 import { terminalNodeWebSocket } from 'src/endpoints/terminal/terminalNode/terminalNode'
 import { podLogsWebSocket } from 'src/endpoints/terminal/podLogs/podLogs'
 import { podLogsNonWsWebSocket } from 'src/endpoints/terminal/podLogs/podLogsNonWs'
+import { getKinds } from 'src/endpoints/search/kinds/getKinds'
 
 dotenv.config()
 
@@ -87,6 +88,10 @@ app.post(`${BASEPREFIX}/openapi-bff/scopes/checkScopes/checkIfApiNamespaceScoped
 app.post(`${BASEPREFIX}/openapi-bff/scopes/checkScopes/checkIfBuiltInNamespaceScoped`, checkIfBuiltInNamespaceScoped)
 app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfApiNamespaceScoped`, filterIfApiNamespaceScoped)
 app.post(`${BASEPREFIX}/openapi-bff/scopes/filterScopes/filterIfBuiltInNamespaceScoped`, filterIfBuiltInNamespaceScoped)
+
+/* search */
+/* kinds */
+app.get(`${BASEPREFIX}/openapi-bff/search/kinds/getKinds`, getKinds)
 
 /* terminal */
 app.ws(`${BASEPREFIX}/openapi-bff-ws/terminal/terminalPod/terminalPod`, terminalPodWebSocket)
