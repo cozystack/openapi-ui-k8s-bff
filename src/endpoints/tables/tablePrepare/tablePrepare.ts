@@ -41,9 +41,27 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
         jsonPath: '.metadata.name',
       },
       {
-        name: 'Timestamp',
+        name: 'Namespace',
         type: 'string',
+        jsonPath: '.metadata.namespace',
+      },
+      {
+        name: 'Created',
+        type: 'factory',
         jsonPath: '.metadata.creationTimestamp',
+        customProps: {
+          disableEventBubbling: true,
+          items: [
+            {
+              type: 'parsedText',
+              data: {
+                id: 'created-timestamp',
+                text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
+                formatter: 'timestamp',
+              },
+            },
+          ],
+        },
       },
     ]
 
@@ -70,10 +88,33 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
 
     const result: TPrepareTableRes = {
       additionalPrinterColumns: ensuredCustomOverrides || additionalPrinterColumns,
-      additionalPrinterColumnsUndefinedValues: ensuredCustomOverridesUndefinedValues,
+      additionalPrinterColumnsUndefinedValues: [
+        { key: 'Namespace', value: '-' },
+        ...(ensuredCustomOverridesUndefinedValues || []),
+      ],
       additionalPrinterColumnsTrimLengths: ensuredCustomOverridesTrimLengths,
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
-      additionalPrinterColumnsKeyTypeProps: ensuredCustomOverridesKeyTypeProps,
+      additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
+        ? ensuredCustomOverridesKeyTypeProps
+        : {
+            Namespace: { type: 'string' },
+            Created: {
+              type: 'factory',
+              customProps: {
+                disableEventBubbling: true,
+                items: [
+                  {
+                    type: 'parsedText',
+                    data: {
+                      id: 'created-timestamp',
+                      text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
+                      formatter: 'timestamp',
+                    },
+                  },
+                ],
+              },
+            },
+          },
 
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
