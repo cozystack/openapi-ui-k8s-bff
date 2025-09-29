@@ -92,7 +92,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
         { key: 'Namespace', value: '-' },
         ...(ensuredCustomOverridesUndefinedValues || []),
       ],
-      additionalPrinterColumnsTrimLengths: ensuredCustomOverridesTrimLengths,
+      additionalPrinterColumnsTrimLengths: [{ key: 'Name', value: 64 }, ...(ensuredCustomOverridesTrimLengths || [])],
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
       additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
         ? ensuredCustomOverridesKeyTypeProps
