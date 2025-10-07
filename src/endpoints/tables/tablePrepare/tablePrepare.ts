@@ -40,11 +40,15 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
         type: 'string',
         jsonPath: '.metadata.name',
       },
-      {
-        name: 'Namespace',
-        type: 'string',
-        jsonPath: '.metadata.namespace',
-      },
+      ...(req.body.namespaceScopedWithoutNamespace
+        ? [
+            {
+              name: 'Namespace',
+              type: 'string',
+              jsonPath: '.metadata.namespace',
+            },
+          ]
+        : []),
       {
         name: 'Created',
         type: 'factory',
@@ -97,7 +101,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
         ? ensuredCustomOverridesKeyTypeProps
         : {
-            Namespace: { type: 'string' },
+            ...(req.body.namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
             Created: {
               type: 'factory',
               customProps: {
