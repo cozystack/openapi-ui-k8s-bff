@@ -34,13 +34,28 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       customizationId: req.body.customizationId,
     })
 
+    let isNamespaced = false
+    if (req.body.k8sResource?.apiGroup) {
+      const { data: apis } = await userKubeApi.get<TODO>(
+        `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.resource}`,
+        {
+          headers: {
+            ...(DEVELOPMENT ? {} : filteredHeaders),
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+    }
+
+    const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
+
     const additionalPrinterColumns: TAdditionalPrinterColumns = req.body.forceDefaultAdditionalPrinterColumns || [
       {
         name: 'Name',
         type: 'string',
         jsonPath: '.metadata.name',
       },
-      ...(req.body.namespaceScopedWithoutNamespace
+      ...(namespaceScopedWithoutNamespace
         ? [
             {
               name: 'Namespace',
@@ -101,7 +116,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
         ? ensuredCustomOverridesKeyTypeProps
         : {
-            ...(req.body.namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
+            ...(namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
             Created: {
               type: 'factory',
               customProps: {
