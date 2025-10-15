@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express'
 import _ from 'lodash'
 import { TPrepareTableReq, TPrepareTableRes } from 'src/localTypes/endpoints/tables'
+import { TAPIResourceList, TAPIResource } from 'src/localTypes/kinds'
 import { TAdditionalPrinterColumns, TTableMappingResponse } from 'src/localTypes/tableExtensions'
 import { TApiResources } from 'src/localTypes/k8s'
 import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
@@ -34,13 +35,50 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       customizationId: req.body.customizationId,
     })
 
+    let isNamespaced = false
+    if (req.body.k8sResource?.apiGroup) {
+      const { data: apiResourceList } = await userKubeApi.get<TAPIResourceList>(
+        `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiVersion}`,
+        {
+          headers: {
+            ...(DEVELOPMENT ? {} : filteredHeaders),
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
+        ({ name }) => name === req.body.k8sResource?.resource,
+      )
+      if (specificResource?.namespaced) {
+        isNamespaced = true
+      }
+    } else if (req.body.k8sResource?.resource) {
+      const { data: apiResourceList } = await userKubeApi.get<TAPIResourceList>(
+        `/api/${req.body.k8sResource.apiVersion}`,
+        {
+          headers: {
+            ...(DEVELOPMENT ? {} : filteredHeaders),
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
+        ({ name }) => name === req.body.k8sResource?.resource,
+      )
+      if (specificResource?.namespaced) {
+        isNamespaced = true
+      }
+    }
+
+    const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
+
     const additionalPrinterColumns: TAdditionalPrinterColumns = req.body.forceDefaultAdditionalPrinterColumns || [
       {
         name: 'Name',
         type: 'string',
         jsonPath: '.metadata.name',
       },
-      ...(req.body.namespaceScopedWithoutNamespace
+      ...(namespaceScopedWithoutNamespace
         ? [
             {
               name: 'Namespace',
@@ -101,7 +139,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
         ? ensuredCustomOverridesKeyTypeProps
         : {
-            ...(req.body.namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
+            ...(namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
             Created: {
               type: 'factory',
               customProps: {
