@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express'
 import _ from 'lodash'
 import { TPrepareTableReq, TPrepareTableRes } from 'src/localTypes/endpoints/tables'
+import { TAPIResourceList, TAPIResource } from 'src/localTypes/kinds'
 import { TAdditionalPrinterColumns, TTableMappingResponse } from 'src/localTypes/tableExtensions'
 import { TApiResources } from 'src/localTypes/k8s'
 import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
@@ -36,8 +37,8 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
 
     let isNamespaced = false
     if (req.body.k8sResource?.apiGroup) {
-      const { data: apis } = await userKubeApi.get<TODO>(
-        `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.resource}`,
+      const { data: apiResourceList } = await userKubeApi.get<TAPIResourceList>(
+        `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiVersion}`,
         {
           headers: {
             ...(DEVELOPMENT ? {} : filteredHeaders),
@@ -45,6 +46,28 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
           },
         },
       )
+      const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
+        ({ name }) => name === req.body.k8sResource?.resource,
+      )
+      if (specificResource?.namespaced) {
+        isNamespaced = true
+      }
+    } else if (req.body.k8sResource?.resource) {
+      const { data: apiResourceList } = await userKubeApi.get<TAPIResourceList>(
+        `/api/${req.body.k8sResource.apiVersion}`,
+        {
+          headers: {
+            ...(DEVELOPMENT ? {} : filteredHeaders),
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
+        ({ name }) => name === req.body.k8sResource?.resource,
+      )
+      if (specificResource?.namespaced) {
+        isNamespaced = true
+      }
     }
 
     const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
