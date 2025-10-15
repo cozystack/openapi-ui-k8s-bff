@@ -39,12 +39,6 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
     if (req.body.k8sResource?.apiGroup) {
       const { data: apiResourceList } = await kubeApi.get<TAPIResourceList>(
         `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiVersion}`,
-        {
-          headers: {
-            ...(DEVELOPMENT ? {} : filteredHeaders),
-            'Content-Type': 'application/json',
-          },
-        },
       )
       const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
         ({ name }) => name === req.body.k8sResource?.resource,
@@ -53,12 +47,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
         isNamespaced = true
       }
     } else if (req.body.k8sResource?.resource) {
-      const { data: apiResourceList } = await kubeApi.get<TAPIResourceList>(`/api/${req.body.k8sResource.apiVersion}`, {
-        headers: {
-          ...(DEVELOPMENT ? {} : filteredHeaders),
-          'Content-Type': 'application/json',
-        },
-      })
+      const { data: apiResourceList } = await kubeApi.get<TAPIResourceList>(`/api/${req.body.k8sResource.apiVersion}`)
       const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
         ({ name }) => name === req.body.k8sResource?.resource,
       )
