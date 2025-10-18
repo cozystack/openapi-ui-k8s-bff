@@ -36,6 +36,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
     })
 
     let isNamespaced = false
+    let kind: string | undefined
     if (req.body.k8sResource?.apiGroup) {
       const { data: apiResourceList } = await kubeApi.get<TAPIResourceList>(
         `/apis/${req.body.k8sResource.apiGroup}/${req.body.k8sResource.apiVersion}`,
@@ -46,6 +47,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       if (specificResource?.namespaced) {
         isNamespaced = true
       }
+      kind = specificResource?.kind
     } else if (req.body.k8sResource?.resource) {
       const { data: apiResourceList } = await kubeApi.get<TAPIResourceList>(`/api/${req.body.k8sResource.apiVersion}`)
       const specificResource: TAPIResource | undefined = apiResourceList.resources.find(
@@ -54,6 +56,7 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       if (specificResource?.namespaced) {
         isNamespaced = true
       }
+      kind = specificResource?.kind
     }
 
     const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
@@ -125,6 +128,41 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
         ? ensuredCustomOverridesKeyTypeProps
         : {
+            Name: {
+              type: 'factory',
+              customProps: {
+                disableEventBubbling: true,
+                items: [
+                  {
+                    children: [
+                      {
+                        data: {
+                          id: 'example-resource-badge',
+                          value: kind,
+                        },
+                        type: 'ResourceBadge',
+                      },
+                      {
+                        data: {
+                          // todo
+                          // href: "/openapi-ui/{2}/{reqsJsonPath[0]['.metadata.namespace']['-']}/factory/job-details/{reqsJsonPath[0]['.metadata.name']['-']}",
+                          id: 'name-link',
+                          text: "{reqsJsonPath[0]['.metadata.name']['-']}",
+                        },
+                        type: 'antdLink',
+                      },
+                    ],
+                    data: {
+                      align: 'center',
+                      direction: 'row',
+                      gap: 6,
+                      id: 'resource-badge-link-row',
+                    },
+                    type: 'antdFlex',
+                  },
+                ],
+              },
+            },
             ...(namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
             Created: {
               type: 'factory',
