@@ -8,7 +8,7 @@ import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/env
 import { userKubeApi, kubeApi } from 'src/constants/httpAgent'
 import { parseColumnsOverrides } from './utils/parseColumnsOverrides'
 import { prepareTableMappings } from './utils/prepareTableMappings'
-import { getResourceLinkWithoutName } from './utils/getBaseLinks'
+import { getResourceLinkWithoutName, getNamespaceLink } from './utils/getBaseLinks'
 import { getDefaultAdditionalPrinterColumns } from './utils/getDefaultAdditionalPrinterColumns'
 import { prepareKeyTypeProps } from './utils/prepareKeyTypeProps'
 
@@ -72,6 +72,10 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
           namespace: req.body.namespace,
         })
       : undefined
+    const namespaceLinkWithoutName = getNamespaceLink()
+
+    // console.log(`resource: ${req.body.k8sResource?.resource} | namespaced: ${isNamespaced}`)
+    // console.log(`resource: ${req.body.k8sResource?.resource} | basePrefixLinkWithoutName: ${basePrefixLinkWithoutName}`)
 
     const additionalPrinterColumns = getDefaultAdditionalPrinterColumns({
       forceDefaultAdditionalPrinterColumns: req.body.forceDefaultAdditionalPrinterColumns,
@@ -108,11 +112,11 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       additionalPrinterColumnsTrimLengths: [{ key: 'Name', value: 64 }, ...(ensuredCustomOverridesTrimLengths || [])],
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
       additionalPrinterColumnsKeyTypeProps: prepareKeyTypeProps({
-        ensuredCustomOverrides,
         ensuredCustomOverridesKeyTypeProps,
         namespaceScopedWithoutNamespace,
         kind,
         basePrefixLinkWithoutName,
+        namespaceLinkWithoutName,
       }),
 
       pathToNavigate: tableMappingSpecific?.pathToNavigate,

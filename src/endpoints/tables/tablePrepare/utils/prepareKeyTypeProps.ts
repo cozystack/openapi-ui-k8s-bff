@@ -46,9 +46,9 @@ export const getNameFactory = ({
 }
 
 export const getNamespaceFactory = ({
-  basePrefixLinkWithoutName,
+  namespaceLinkWithoutName,
 }: {
-  basePrefixLinkWithoutName?: string
+  namespaceLinkWithoutName?: string
 }): TAdditionalPrinterColumnsKeyTypeProps => {
   return {
     Namespace: {
@@ -75,7 +75,7 @@ export const getNamespaceFactory = ({
               {
                 type: 'antdLink',
                 data: {
-                  href: `${basePrefixLinkWithoutName}/{reqsJsonPath[0]['.metadata.namespace']['-']}`,
+                  href: `${namespaceLinkWithoutName}/{reqsJsonPath[0]['.metadata.namespace']['-']}`,
                   id: 'name-link',
                   text: "{reqsJsonPath[0]['.metadata.namespace']['-']}",
                 },
@@ -110,20 +110,20 @@ export const getTimestampFactory = (): TAdditionalPrinterColumnsKeyTypeProps => 
 }
 
 export const prepareKeyTypeProps = ({
-  ensuredCustomOverrides,
   ensuredCustomOverridesKeyTypeProps,
   namespaceScopedWithoutNamespace,
   kind,
   basePrefixLinkWithoutName,
+  namespaceLinkWithoutName,
 }: {
-  ensuredCustomOverrides?: TAdditionalPrinterColumns
   ensuredCustomOverridesKeyTypeProps: TAdditionalPrinterColumnsKeyTypeProps | undefined
   namespaceScopedWithoutNamespace?: boolean
   kind?: string
   basePrefixLinkWithoutName?: string
+  namespaceLinkWithoutName?: string
 }): TAdditionalPrinterColumnsKeyTypeProps => {
   const nameFactory = getNameFactory({ kind, basePrefixLinkWithoutName })
-  const namespaceFactory = getNamespaceFactory({ basePrefixLinkWithoutName })
+  const namespaceFactory = getNamespaceFactory({ namespaceLinkWithoutName })
   const timestampFactory = getTimestampFactory()
 
   // Start with a shallow copy of provided key-type props (if any).

@@ -5,9 +5,8 @@ import {
   BASE_FACTORY_CLUSTERSCOPED_API_KEY,
   BASE_FACTORY_NAMESPACED_BUILTIN_KEY,
   BASE_FACTORY_CLUSTERSCOPED_BUILTIN_KEY,
+  BASE_NAMESPACE_FACTORY_KEY,
 } from 'src/constants/envs'
-
-// href: "/factory/job-details/{reqsJsonPath[0]['.metadata.name']['-']}",
 
 export const getResourceLinkWithoutName = ({
   resource,
@@ -22,12 +21,19 @@ export const getResourceLinkWithoutName = ({
   isNamespaced?: boolean
   namespace?: string
 }): string => {
+  const namespacePrepared = namespace ? `/${namespace}` : `/{reqsJsonPath[0]['.metadata.namespace']['-']}`
+
   if (apiGroup) {
-    return `/${BASE_FRONTEND_PREFIX}/${BASE_CLUSTERNAME}${isNamespaced && namespace ? `/${namespace}` : ''}/factory/${
+    return `${BASE_FRONTEND_PREFIX}/${BASE_CLUSTERNAME}${isNamespaced ? namespacePrepared : ''}/factory/${
       isNamespaced ? BASE_FACTORY_NAMESPACED_API_KEY : BASE_FACTORY_CLUSTERSCOPED_API_KEY
-    }/${apiGroup}/${apiVersion}/${resource}`
+    }${apiGroup ? `/${apiGroup}` : ''}/${apiVersion}/${resource}`
   }
-  return `/${BASE_FRONTEND_PREFIX}/${BASE_CLUSTERNAME}${isNamespaced && namespace ? `/${namespace}` : ''}/factory/${
+
+  return `${BASE_FRONTEND_PREFIX}/${BASE_CLUSTERNAME}${isNamespaced ? namespacePrepared : ''}/factory/${
     isNamespaced ? BASE_FACTORY_NAMESPACED_BUILTIN_KEY : BASE_FACTORY_CLUSTERSCOPED_BUILTIN_KEY
-  }/${apiGroup}/${apiVersion}/${resource}`
+  }${apiGroup ? `/${apiGroup}` : ''}/${apiVersion}/${resource}`
+}
+
+export const getNamespaceLink = (): string => {
+  return `${BASE_FRONTEND_PREFIX}/${BASE_CLUSTERNAME}/factory/${BASE_NAMESPACE_FACTORY_KEY}`
 }
