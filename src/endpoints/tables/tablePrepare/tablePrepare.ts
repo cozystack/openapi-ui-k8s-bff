@@ -2,7 +2,7 @@ import { RequestHandler } from 'express'
 import _ from 'lodash'
 import { TPrepareTableReq, TPrepareTableRes } from 'src/localTypes/endpoints/tables'
 import { TAPIResourceList, TAPIResource } from 'src/localTypes/kinds'
-import { TAdditionalPrinterColumns, TTableMappingResponse } from 'src/localTypes/tableExtensions'
+import { TTableMappingResponse } from 'src/localTypes/tableExtensions'
 import { TApiResources } from 'src/localTypes/k8s'
 import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
 import { userKubeApi, kubeApi } from 'src/constants/httpAgent'
@@ -10,6 +10,7 @@ import { parseColumnsOverrides } from './utils/parseColumnsOverrides'
 import { prepareTableMappings } from './utils/prepareTableMappings'
 import { getResourceLinkWithoutName } from './utils/getBaseLinks'
 import { getDefaultAdditionalPrinterColumns } from './utils/getDefaultAdditionalPrinterColumns'
+import { prepareKeyTypeProps } from './utils/prepareKeyTypeProps'
 
 export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, res) => {
   try {
@@ -106,62 +107,13 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       ],
       additionalPrinterColumnsTrimLengths: [{ key: 'Name', value: 64 }, ...(ensuredCustomOverridesTrimLengths || [])],
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
-      additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
-        ? ensuredCustomOverridesKeyTypeProps
-        : {
-            Name: {
-              type: 'factory',
-              customProps: {
-                disableEventBubbling: true,
-                items: [
-                  {
-                    children: [
-                      {
-                        data: {
-                          id: 'example-resource-badge',
-                          value: kind,
-                        },
-                        type: 'ResourceBadge',
-                      },
-                      {
-                        data: {
-                          // todo
-                          // href: "/openapi-ui/{2}/{reqsJsonPath[0]['.metadata.namespace']['-']}/factory/job-details/{reqsJsonPath[0]['.metadata.name']['-']}",
-                          id: 'name-link',
-                          text: "{reqsJsonPath[0]['.metadata.name']['-']}",
-                        },
-                        type: 'antdLink',
-                      },
-                    ],
-                    data: {
-                      align: 'center',
-                      direction: 'row',
-                      gap: 6,
-                      id: 'resource-badge-link-row',
-                    },
-                    type: 'antdFlex',
-                  },
-                ],
-              },
-            },
-            ...(namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
-            Created: {
-              type: 'factory',
-              customProps: {
-                disableEventBubbling: true,
-                items: [
-                  {
-                    type: 'parsedText',
-                    data: {
-                      id: 'created-timestamp',
-                      text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
-                      formatter: 'timestamp',
-                    },
-                  },
-                ],
-              },
-            },
-          },
+      additionalPrinterColumnsKeyTypeProps: prepareKeyTypeProps({
+        ensuredCustomOverrides,
+        ensuredCustomOverridesKeyTypeProps,
+        namespaceScopedWithoutNamespace,
+        kind,
+        basePrefixLinkWithoutName,
+      }),
 
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
