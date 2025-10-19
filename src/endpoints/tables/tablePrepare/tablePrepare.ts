@@ -8,6 +8,8 @@ import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/env
 import { userKubeApi, kubeApi } from 'src/constants/httpAgent'
 import { parseColumnsOverrides } from './utils/parseColumnsOverrides'
 import { prepareTableMappings } from './utils/prepareTableMappings'
+import { getResourceLinkWithoutName } from './utils/getBaseLinks'
+import { getDefaultAdditionalPrinterColumns } from './utils/getDefaultAdditionalPrinterColumns'
 
 export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, res) => {
   try {
@@ -60,41 +62,20 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
     }
 
     const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
+    const basePrefixLinkWithoutName = req.body.k8sResource
+      ? getResourceLinkWithoutName({
+          resource: req.body.k8sResource.resource,
+          apiGroup: req.body.k8sResource.apiGroup,
+          apiVersion: req.body.k8sResource.apiVersion,
+          isNamespaced,
+          namespace: req.body.namespace,
+        })
+      : undefined
 
-    const additionalPrinterColumns: TAdditionalPrinterColumns = req.body.forceDefaultAdditionalPrinterColumns || [
-      {
-        name: 'Name',
-        type: 'string',
-        jsonPath: '.metadata.name',
-      },
-      ...(namespaceScopedWithoutNamespace
-        ? [
-            {
-              name: 'Namespace',
-              type: 'string',
-              jsonPath: '.metadata.namespace',
-            },
-          ]
-        : []),
-      {
-        name: 'Created',
-        type: 'factory',
-        jsonPath: '.metadata.creationTimestamp',
-        customProps: {
-          disableEventBubbling: true,
-          items: [
-            {
-              type: 'parsedText',
-              data: {
-                id: 'created-timestamp',
-                text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
-                formatter: 'timestamp',
-              },
-            },
-          ],
-        },
-      },
-    ]
+    const additionalPrinterColumns = getDefaultAdditionalPrinterColumns({
+      forceDefaultAdditionalPrinterColumns: req.body.forceDefaultAdditionalPrinterColumns,
+      namespaceScopedWithoutNamespace,
+    })
 
     const { data: tableurimappings } = await userKubeApi.get<TTableMappingResponse>(
       `/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/tableurimappings`,
