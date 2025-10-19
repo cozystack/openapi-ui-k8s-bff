@@ -122,7 +122,7 @@ export const prepareKeyTypeProps = ({
   basePrefixLinkWithoutName?: string
   namespaceLinkWithoutName?: string
 }): TAdditionalPrinterColumnsKeyTypeProps => {
-  const nameFactory = getNameFactory({ kind, basePrefixLinkWithoutName })
+  const nameFactory = kind ? getNameFactory({ kind, basePrefixLinkWithoutName }) : {}
   const namespaceFactory = getNamespaceFactory({ namespaceLinkWithoutName })
   const timestampFactory = getTimestampFactory()
 
@@ -141,7 +141,7 @@ export const prepareKeyTypeProps = ({
   // For each required factory key: if missing or not a factory, replace it.
   for (const key of Object.keys(requiredFactories)) {
     const existing = result[key]
-    const shouldReplace = !existing || existing.type !== 'factory'
+    const shouldReplace = existing && existing.type !== 'factory'
     if (shouldReplace) {
       result[key] = requiredFactories[key]
     }
