@@ -2,12 +2,15 @@ import { RequestHandler } from 'express'
 import _ from 'lodash'
 import { TPrepareTableReq, TPrepareTableRes } from 'src/localTypes/endpoints/tables'
 import { TAPIResourceList, TAPIResource } from 'src/localTypes/kinds'
-import { TAdditionalPrinterColumns, TTableMappingResponse } from 'src/localTypes/tableExtensions'
+import { TTableMappingResponse } from 'src/localTypes/tableExtensions'
 import { TApiResources } from 'src/localTypes/k8s'
 import { DEVELOPMENT, BASE_API_GROUP, BASE_API_VERSION } from 'src/constants/envs'
 import { userKubeApi, kubeApi } from 'src/constants/httpAgent'
 import { parseColumnsOverrides } from './utils/parseColumnsOverrides'
 import { prepareTableMappings } from './utils/prepareTableMappings'
+import { getResourceLinkWithoutName, getNamespaceLink } from './utils/getBaseLinks'
+import { getDefaultAdditionalPrinterColumns } from './utils/getDefaultAdditionalPrinterColumns'
+import { prepareKeyTypeProps } from './utils/prepareKeyTypeProps'
 
 export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, res) => {
   try {
@@ -60,41 +63,24 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
     }
 
     const namespaceScopedWithoutNamespace = isNamespaced && !req.body.namespace
+    const basePrefixLinkWithoutName = req.body.k8sResource
+      ? getResourceLinkWithoutName({
+          resource: req.body.k8sResource.resource,
+          apiGroup: req.body.k8sResource.apiGroup,
+          apiVersion: req.body.k8sResource.apiVersion,
+          isNamespaced,
+          namespace: req.body.namespace,
+        })
+      : undefined
+    const namespaceLinkWithoutName = getNamespaceLink()
 
-    const additionalPrinterColumns: TAdditionalPrinterColumns = req.body.forceDefaultAdditionalPrinterColumns || [
-      {
-        name: 'Name',
-        type: 'string',
-        jsonPath: '.metadata.name',
-      },
-      ...(namespaceScopedWithoutNamespace
-        ? [
-            {
-              name: 'Namespace',
-              type: 'string',
-              jsonPath: '.metadata.namespace',
-            },
-          ]
-        : []),
-      {
-        name: 'Created',
-        type: 'factory',
-        jsonPath: '.metadata.creationTimestamp',
-        customProps: {
-          disableEventBubbling: true,
-          items: [
-            {
-              type: 'parsedText',
-              data: {
-                id: 'created-timestamp',
-                text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
-                formatter: 'timestamp',
-              },
-            },
-          ],
-        },
-      },
-    ]
+    // console.log(`resource: ${req.body.k8sResource?.resource} | namespaced: ${isNamespaced}`)
+    // console.log(`resource: ${req.body.k8sResource?.resource} | basePrefixLinkWithoutName: ${basePrefixLinkWithoutName}`)
+
+    const additionalPrinterColumns = getDefaultAdditionalPrinterColumns({
+      forceDefaultAdditionalPrinterColumns: req.body.forceDefaultAdditionalPrinterColumns,
+      namespaceScopedWithoutNamespace,
+    })
 
     const { data: tableurimappings } = await userKubeApi.get<TTableMappingResponse>(
       `/apis/${BASE_API_GROUP}/${BASE_API_VERSION}/tableurimappings`,
@@ -125,62 +111,13 @@ export const prepareTableProps: RequestHandler = async (req: TPrepareTableReq, r
       ],
       additionalPrinterColumnsTrimLengths: [{ key: 'Name', value: 64 }, ...(ensuredCustomOverridesTrimLengths || [])],
       additionalPrinterColumnsColWidths: ensuredCustomOverridesColWidths,
-      additionalPrinterColumnsKeyTypeProps: ensuredCustomOverrides
-        ? ensuredCustomOverridesKeyTypeProps
-        : {
-            Name: {
-              type: 'factory',
-              customProps: {
-                disableEventBubbling: true,
-                items: [
-                  {
-                    children: [
-                      {
-                        data: {
-                          id: 'example-resource-badge',
-                          value: kind,
-                        },
-                        type: 'ResourceBadge',
-                      },
-                      {
-                        data: {
-                          // todo
-                          // href: "/openapi-ui/{2}/{reqsJsonPath[0]['.metadata.namespace']['-']}/factory/job-details/{reqsJsonPath[0]['.metadata.name']['-']}",
-                          id: 'name-link',
-                          text: "{reqsJsonPath[0]['.metadata.name']['-']}",
-                        },
-                        type: 'antdLink',
-                      },
-                    ],
-                    data: {
-                      align: 'center',
-                      direction: 'row',
-                      gap: 6,
-                      id: 'resource-badge-link-row',
-                    },
-                    type: 'antdFlex',
-                  },
-                ],
-              },
-            },
-            ...(namespaceScopedWithoutNamespace && { Namespace: { type: 'string' } }),
-            Created: {
-              type: 'factory',
-              customProps: {
-                disableEventBubbling: true,
-                items: [
-                  {
-                    type: 'parsedText',
-                    data: {
-                      id: 'created-timestamp',
-                      text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
-                      formatter: 'timestamp',
-                    },
-                  },
-                ],
-              },
-            },
-          },
+      additionalPrinterColumnsKeyTypeProps: prepareKeyTypeProps({
+        ensuredCustomOverridesKeyTypeProps,
+        namespaceScopedWithoutNamespace,
+        kind,
+        basePrefixLinkWithoutName,
+        namespaceLinkWithoutName,
+      }),
 
       pathToNavigate: tableMappingSpecific?.pathToNavigate,
       recordKeysForNavigation: tableMappingSpecific?.keysToParse,
