@@ -96,12 +96,29 @@ export const getTimestampFactory = (): TAdditionalPrinterColumnsKeyTypeProps => 
         disableEventBubbling: true,
         items: [
           {
-            type: 'parsedText',
+            type: 'antdFlex',
             data: {
-              id: 'created-timestamp',
-              text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
-              formatter: 'timestamp',
+              align: 'center',
+              gap: 6,
+              id: 'time-block',
             },
+            children: [
+              {
+                type: 'antdText',
+                data: {
+                  id: 'time-icon',
+                  text: '🌐',
+                },
+              },
+              {
+                type: 'parsedText',
+                data: {
+                  id: 'created-timestamp',
+                  text: "{reqsJsonPath[0]['.metadata.creationTimestamp']['-']}",
+                  formatter: 'timestamp',
+                },
+              },
+            ],
           },
         ],
       },
