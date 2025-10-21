@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, { uniq } from 'lodash'
 import { getClusterSwaggerPathByName, getClusterSwaggerPaths } from 'src/cache'
 import { TPrepareForm } from 'src/localTypes/forms'
 import { TPrepareFormRes } from 'src/localTypes/endpoints/forms'
@@ -8,6 +8,7 @@ import { getBodyParametersSchema } from './getBodyParametersSchema'
 import { processOverride } from './processOverride'
 import { getPathsWithAdditionalProperties } from './getPathsWithAdditionalProperties'
 import { getPropertiesToMerge } from './getPropertiesToMerge'
+import { computePersistedAPPaths } from './computePersistedAPPaths'
 
 export const prepare = async ({
   data,
@@ -57,6 +58,11 @@ export const prepare = async ({
 
   const specificCustomOverrides = formsOverridesData?.items.find(item => item.spec.customizationId === customizationId)
 
+  const autoPersistedFromAP = computePersistedAPPaths({
+    pathsWithAdditionalProperties,
+    prefillValuesSchema: data.prefillValuesSchema,
+  })
+
   const {
     hiddenPaths,
     expandedPaths,
@@ -69,13 +75,25 @@ export const prepare = async ({
     bodyParametersSchema,
   })
 
+  // merge persisted lists generically
+  const mergedPersistedPaths: string[][] = [...(persistedPaths || []), ...autoPersistedFromAP]
+
+  // ensure uniqueness (optional)
+  const uniqPersisted = Array.from(new Map(mergedPersistedPaths.map(p => [p.join('\u0000'), p])).values())
+
+  // merge persisted lists generically
+  const mergedExpandedPaths: string[][] = [...(expandedPaths || []), ...autoPersistedFromAP]
+
+  // ensure uniqueness (optional)
+  const uniqExpanded = Array.from(new Map(mergedExpandedPaths.map(p => [p.join('\u0000'), p])).values())
+
   return {
     result: 'success',
     properties,
     required,
     hiddenPaths: hiddenPaths || [],
-    expandedPaths,
-    persistedPaths,
+    expandedPaths: uniqExpanded,
+    persistedPaths: uniqPersisted,
     kindName,
     isNamespaced,
     formPrefills: formsPrefillsData?.items.find(item => item.spec.customizationId === customizationId),
