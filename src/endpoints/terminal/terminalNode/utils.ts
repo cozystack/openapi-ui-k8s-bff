@@ -2,12 +2,14 @@ import { AxiosRequestConfig } from 'axios'
 import { userKubeApi } from 'src/constants/httpAgent'
 import { TProfileType } from './types'
 import { CONTAINER_WAITING } from './constants'
-import { getLegacyPod } from './getLegacyPod'
-import { getGeneralPod } from './getGeneralPod'
-import { getBaselinePod } from './getBaselinePod'
-import { getNetadminPod } from './getNetadminPod'
-import { getRestrictedPod } from './getRestrictedPod'
-import { getSysadminPod } from './getSysadminPod'
+import {
+  getLegacyPod,
+  getGeneralPod,
+  getBaselinePod,
+  getNetadminPod,
+  getRestrictedPod,
+  getSysadminPod,
+} from './podProfiles'
 
 export const generateRandomLetters = (): string => {
   const chars = 'abcdefghijklmnopqrstuvwxyz'
