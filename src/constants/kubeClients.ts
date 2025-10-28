@@ -78,6 +78,16 @@ type TDiscoveryHelpers = {
   getResourcesFor: (group: string, version: string, signal?: AbortSignal) => Promise<V1APIResourceList>
 }
 
+type TRequestOptionsLike = {
+  headers?: Record<string, string>
+  // allow extra fields the client sets internally
+  [key: string]: any
+}
+
+type THasAddInterceptor = {
+  addInterceptor: (fn: (opts: TRequestOptionsLike) => void | Promise<void>) => void
+}
+
 /**
  * Preserve original in-cluster file logic + logs
  */
@@ -176,32 +186,32 @@ export const allApis: TKubeClientsSurface = {
  * ---- API discovery helpers (v1 everything) ----
  * Lightweight wrappers using the underlying client's raw `request` method.
  */
-const rawGet = async <T>(client: any, path: string, signal?: AbortSignal): Promise<T> => {
-  const opts: any = { method: 'GET', uri: `${baseUrl}${path}` }
-  if (DEVELOPMENT) opts.rejectUnauthorized = false
-  if (signal) opts.signal = signal
-  return client.request(opts).then((res: any) => (res.body ? JSON.parse(res.body) : res))
-}
+// const rawGet = async <T>(client: any, path: string, signal?: AbortSignal): Promise<T> => {
+//   const opts: any = { method: 'GET', uri: `${baseUrl}${path}` }
+//   if (DEVELOPMENT) opts.rejectUnauthorized = false
+//   if (signal) opts.signal = signal
+//   return client.request(opts).then((res: any) => (res.body ? JSON.parse(res.body) : res))
+// }
 
-/** List non-core API groups (GET /apis) */
-export const getApiGroups = async (signal?: AbortSignal): Promise<V1APIGroupList> => {
-  return rawGet(allApis.core, '/apis', signal)
-}
+// /** List non-core API groups (GET /apis) */
+// export const getApiGroups = async (signal?: AbortSignal): Promise<V1APIGroupList> => {
+//   return rawGet(allApis.core, '/apis', signal)
+// }
 
-/** List core API versions (GET /api) */
-export const getCoreApiVersions = async (signal?: AbortSignal): Promise<V1APIVersions> => {
-  return rawGet(allApis.core, '/api', signal)
-}
+// /** List core API versions (GET /api) */
+// export const getCoreApiVersions = async (signal?: AbortSignal): Promise<V1APIVersions> => {
+//   return rawGet(allApis.core, '/api', signal)
+// }
 
-/** List resources for a given group/version (GET /apis/{group}/{version}) */
-export const getResourcesFor = async (
-  group: string,
-  version: string,
-  signal?: AbortSignal,
-): Promise<V1APIResourceList> => {
-  const path = `/apis/${group}/${version}`
-  return rawGet(allApis.core, path, signal)
-}
+// /** List resources for a given group/version (GET /apis/{group}/{version}) */
+// export const getResourcesFor = async (
+//   group: string,
+//   version: string,
+//   signal?: AbortSignal,
+// ): Promise<V1APIResourceList> => {
+//   const path = `/apis/${group}/${version}`
+//   return rawGet(allApis.core, path, signal)
+// }
 
 /** ---------- User-proxied client: STRICTLY no SA auth ---------- */
 export const createUserKubeClient = (
@@ -209,7 +219,6 @@ export const createUserKubeClient = (
 ): TKubeClientsSurface &
   TDiscoveryHelpers & {
     kubeConfig: KubeConfig // <-- expose KC for Watch
-    request: (opts: any) => any // <-- convenience raw requester (from core client)
   } => {
   // Build a config with NO credentials at all
   const kc = new KubeConfig()
@@ -247,28 +256,35 @@ export const createUserKubeClient = (
     customObjects: kc.makeApiClient(CustomObjectsApi),
   }
 
-  const normalizeHeaders = (h: Record<string, string | string[] | undefined>): Record<string, string> => {
-    return Object.fromEntries(
+  const normalizeHeaders = (h: Record<string, string | string[] | undefined>): Record<string, string> =>
+    Object.fromEntries(
       Object.entries(h)
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : (v as string)]),
     )
-  }
+
   const normalizedHeaders = normalizeHeaders(userHeaders)
 
-  const patch = (client: any): void => {
-    const orig = client.request.bind(client)
+  // attach an interceptor per client to forward user headers
+  const attachForwardedHeaders = (client: object): void => {
+    const c = client as Partial<THasAddInterceptor>
+    if (!c || typeof c.addInterceptor !== 'function') return
 
-    client.request = (opts: any) => {
-      opts.headers = { ...(opts.headers || {}), ...normalizedHeaders }
+    c.addInterceptor((opts: TRequestOptionsLike) => {
+      // merge headers
+      const existing = opts.headers ?? {}
+      opts.headers = { ...existing, ...normalizedHeaders }
+
+      // dev TLS parity (like your previous rejectUnauthorized=false)
       if (DEVELOPMENT) {
-        opts.rejectUnauthorized = false
+        // for request/request-promise under the hood
+        // both of these are recognized by the generator stack
+        ;(opts as { strictSSL?: boolean }).strictSSL = false
+        ;(opts as { rejectUnauthorized?: boolean }).rejectUnauthorized = false
       }
-      return orig(opts)
-    }
+    })
   }
-
-  Object.values(clients).forEach(patch)
+  Object.values(clients).forEach(attachForwardedHeaders)
 
   // Provide the same discovery helpers, bound to these user clients
   const rawGetUser = async <T>(path: string, signal?: AbortSignal): Promise<T> => {
@@ -285,26 +301,7 @@ export const createUserKubeClient = (
       rawGetUser(`/apis/${group}/${version}`, signal),
   }
 
-  // --- SAFE way to expose `request` ---
-  type TKubeApiWithRequest = {
-    request: (opts: Record<string, unknown>) => Promise<unknown>
-  }
-
-  const hasRequest = (client: object): client is TKubeApiWithRequest => {
-    return typeof (client as any).request === 'function'
-  }
-
-  let requestFn: TKubeApiWithRequest['request']
-
-  if (hasRequest(clients.core)) {
-    requestFn = clients.core.request.bind(clients.core)
-  } else {
-    console.error('CoreV1Api does not expose a request() method — check @kubernetes/client-node version')
-  }
-
-  const request = (clients.core as unknown as { request: (opts: any) => any }).request.bind(clients.core)
-
-  return { ...clients, ...helpers, kubeConfig: kc, request }
+  return { ...clients, ...helpers, kubeConfig: kc }
 }
 
 /**
