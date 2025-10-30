@@ -7,6 +7,8 @@ const DEFAULT_TTL = 60 * 15
 const KEYS_AND_PATHS_TTL = 60 * 16
 const CHECK_PERIOD = 60 * 14
 
+console.log(`[${new Date().toISOString()}]: cache module loaded`)
+
 export const cache = new NodeCache({ stdTTL: DEFAULT_TTL, checkperiod: CHECK_PERIOD })
 
 async function fetchAndDerefSwagger(): Promise<OpenAPIV2.Document | undefined> {
