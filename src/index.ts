@@ -2,12 +2,11 @@ import express, { Express } from 'express'
 import bodyParser from 'body-parser'
 import dotenv from 'dotenv'
 import expressWs from 'express-ws'
-const healthcheck = require('express-healthcheck')
-const promBundle = require('express-prom-bundle')
-const metricsMiddleware = promBundle({ includeMethod: true })
-const cors = require('cors')
-const winston = require('winston')
-const expressWinston = require('express-winston')
+import healthcheck from 'express-healthcheck'
+import promMid from 'express-prometheus-middleware'
+import cors from 'cors'
+import winston from 'winston'
+import expressWinston from 'express-winston'
 // const apicache = require('apicache')
 import { BASEPREFIX } from 'src/constants/envs'
 import { getDerefedSwagger } from 'src/endpoints/swagger'
@@ -27,6 +26,7 @@ import {
 } from 'src/endpoints/terminal'
 import { getKinds } from 'src/endpoints/search'
 import { getEvents, eventsWebSocket } from 'src/endpoints/events'
+import { getClusterSwagger } from './cache'
 
 dotenv.config()
 
@@ -37,7 +37,11 @@ const { app } = expressWs(nonWsApp)
 const port = process.env.PORT || 3000
 
 app.use('/healthcheck', healthcheck())
-app.use(metricsMiddleware)
+app.use(
+  promMid({
+    metricsPath: '/metrics',
+  }),
+)
 
 if (process.env.SWAGGER === 'TRUE') {
   const swaggerUi = require('swagger-ui-express')
@@ -49,7 +53,6 @@ if (process.env.LOGGER === 'TRUE') {
   app.use(
     expressWinston.logger({
       transports: [new winston.transports.Console()],
-      timeStamp: true,
       format: winston.format.combine(
         winston.format.timestamp({
           format: 'YYYY-MM-DD HH:mm:ss',
@@ -73,6 +76,8 @@ app.use(
     origin: [FRONTEND_URL_FOR_CORS],
   }),
 )
+
+await getClusterSwagger()
 
 /* swagger */
 // app.get('/openapi-bff/swagger/swagger/:clusterName', cache('5 minutes'), getDerefedSwagger)
