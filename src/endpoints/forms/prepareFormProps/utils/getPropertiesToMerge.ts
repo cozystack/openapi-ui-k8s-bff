@@ -31,7 +31,8 @@ export const getPropertiesToMerge = ({
 
       const openapiValues: Record<string, unknown> = { properties: {} }
 
-      if (additionalPropSchema) {
+      // Check that additionalPropSchema is a schema object, not a primitive
+      if (additionalPropSchema && typeof additionalPropSchema === 'object' && !Array.isArray(additionalPropSchema)) {
         Object.keys(prefillVals).forEach(el => {
           const schemaClone = _.clone(additionalPropSchema)
           const schemaWithDefaults = applyDefaults(schemaClone, prefillVals[el])
@@ -42,10 +43,10 @@ export const getPropertiesToMerge = ({
           }
         })
       } else {
-        // Fallback: retain your old behavior if the schema isn't found (optional)
+        // Fallback: if schema is not found or is a primitive
         Object.keys(prefillVals).forEach(el => {
           ;(openapiValues.properties as Record<string, unknown>)[el] = {
-            type: prefillValsType,
+            type: prefillValsType || (typeof prefillVals[el] === 'object' ? 'object' : typeof prefillVals[el]),
             isAdditionalProperties: true,
             default: prefillVals[el],
           }
