@@ -1,9 +1,10 @@
 /* eslint-disable max-lines-per-function */
 import { Request } from 'express'
-import WebSocket, { WebSocketServer } from 'ws'
+import WebSocket from 'ws'
 import { WebsocketRequestHandler } from 'express-ws'
 import * as k8s from '@kubernetes/client-node'
 import { createUserKubeClient } from 'src/constants/kubeClients'
+import { eventSortKey } from './utils'
 
 type TWatchPhase = 'ADDED' | 'MODIFIED' | 'DELETED' | 'BOOKMARK'
 
@@ -44,6 +45,8 @@ const getJoinedParam = (url: URL, key: string): string | undefined => {
 }
 
 export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, req: Request) => {
+  console.log(`[${new Date().toISOString()}]: Incoming WebSocket connection for events`)
+
   const headers: Record<string, string | string[] | undefined> = { ...(req.headers || {}) }
   delete headers['host']
 
@@ -51,14 +54,17 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
   const namespace = reqUrl.searchParams.get('namespace') || undefined
   const initialLimit = parseLimit(reqUrl.searchParams.get('limit'))
   const initialContinue = reqUrl.searchParams.get('_continue') || undefined
+  console.log(`[${new Date().toISOString()}]: Query params parsed:`, { namespace, initialLimit, initialContinue })
 
-  // Supports multiple occurrences; they’ll be joined by commas.
-  const fieldSelector = getJoinedParam(reqUrl, 'fieldSelector') ?? getJoinedParam(reqUrl, 'field') // optional alias if you decide to support it
-  const labelSelector = getJoinedParam(reqUrl, 'labelSelector') ?? getJoinedParam(reqUrl, 'labels') // optional alias if you decide to support it
-
+  const fieldSelector = getJoinedParam(reqUrl, 'fieldSelector') ?? getJoinedParam(reqUrl, 'field')
+  const labelSelector = getJoinedParam(reqUrl, 'labelSelector') ?? getJoinedParam(reqUrl, 'labels')
   const sinceRV = reqUrl.searchParams.get('sinceRV') || undefined
 
+  console.log(`[${new Date().toISOString()}]: Selectors:`, { fieldSelector, labelSelector, sinceRV })
+
   const userKube = createUserKubeClient(headers)
+  console.log(`[${new Date().toISOString()}]: Created Kubernetes client for user`)
+
   const watch = new k8s.Watch(userKube.kubeConfig)
   const evApi = userKube.kubeConfig.makeApiClient(k8s.EventsV1Api)
 
@@ -66,7 +72,6 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
   // Seed lastRV from client if provided (so we can resume)
   let lastRV: string | undefined = sinceRV
   let sentInitial = false
-
   let abortCurrentWatch: (() => void) | null = null
   let startingWatch = false
 
@@ -74,10 +79,8 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
     ? `/apis/events.k8s.io/v1/namespaces/${namespace}/events`
     : `/apis/events.k8s.io/v1/events`
 
-  /**
-   * One page of list. If `captureRV` is true we update lastRV from the list's metadata.
-   * We return the page along with pagination metadata so the caller can forward it to the UI.
-   */
+  console.log(`[${new Date().toISOString()}]: Using watchPath:`, watchPath)
+
   const listPage = async ({
     limit,
     _continue,
@@ -87,14 +90,15 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
     _continue?: string
     captureRV: boolean
   }) => {
+    console.log(`[${new Date().toISOString()}]: Listing page of events`, { limit, _continue, captureRV, lastRV })
+
     const baseOpts: k8s.EventsV1ApiListEventForAllNamespacesRequest = {
       fieldSelector,
       labelSelector,
       limit: typeof limit === 'number' ? limit : undefined,
-      _continue, // may be undefined
+      _continue,
     }
 
-    // Only add RV knobs when NOT paginating with a continue token
     if (!_continue && lastRV) {
       baseOpts.resourceVersion = lastRV
       baseOpts.resourceVersionMatch = 'NotOlderThan'
@@ -104,11 +108,20 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
       ? await evApi.listNamespacedEvent({ namespace, ...baseOpts })
       : await evApi.listEventForAllNamespaces(baseOpts)
 
-    // Record RV only for the *initial* snapshot page we are anchoring the watch to.
-    if (captureRV) lastRV = resp.metadata?.resourceVersion
+    const items = (resp.items ?? []) as k8s.EventsV1Event[]
+    items.sort((a, b) => eventSortKey(b) - eventSortKey(a)) // newest first
 
+    console.log(`[${new Date().toISOString()}]: List page received`, {
+      // itemCount: resp.items?.length,
+      itemCount: items.length,
+      continue: resp.metadata?._continue,
+      resourceVersion: resp.metadata?.resourceVersion,
+    })
+
+    if (captureRV) lastRV = resp.metadata?.resourceVersion
     return {
-      items: resp.items ?? [],
+      // items: resp.items ?? [],
+      items,
       continue: resp.metadata?._continue,
       remainingItemCount: resp.metadata?.remainingItemCount,
       resourceVersion: resp.metadata?.resourceVersion,
@@ -116,36 +129,40 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
   }
 
   const onEvent = (phase: string, obj: unknown) => {
+    console.log(`[${new Date().toISOString()}]: Watch event fired:`, phase)
     if (closed) return
     const p = phase as TWatchPhase
 
-    // (Optional but recommended) advance RV on BOOKMARK
     if (p === 'BOOKMARK' && obj && typeof obj === 'object') {
       const md = (obj as any).metadata
       if (md?.resourceVersion) lastRV = md.resourceVersion
+      console.log(`[${new Date().toISOString()}]: Bookmark event, updated RV:`, lastRV)
       return
     }
 
     if ((p === 'ADDED' || p === 'MODIFIED' || p === 'DELETED') && isEventsV1Event(obj)) {
       const rv = obj.metadata?.resourceVersion
       if (rv) lastRV = rv
+      console.log(`[${new Date().toISOString()}]: Event:`, p, 'name:', obj.metadata?.name, 'RV:', rv)
       try {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: p, item: obj }))
         }
-      } catch {
-        // ignore send errors (socket might be racing to close)
+      } catch (err) {
+        console.warn(`[${new Date().toISOString()}]: Failed to send event:`, err)
       }
     }
   }
 
   const onError = async (err: unknown) => {
+    console.error(`[${new Date().toISOString()}]: Watch error:`, err)
     if (closed) return
     if (isGone410(err)) {
+      console.warn(`[${new Date().toISOString()}]: 410 Gone detected, resetting list page`)
       try {
         await listPage({ limit: initialLimit, _continue: undefined, captureRV: true })
-      } catch {
-        /* noop */
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}]: Failed to reset listPage after 410:`, e)
       }
     }
     // Restart the watch after a short delay; ensure we stop the current one first
@@ -153,15 +170,19 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
   }
 
   const startWatch = async (): Promise<void> => {
-    if (closed || startingWatch) return
+    console.log(`[${new Date().toISOString()}]: Starting watch...`)
+    if (closed || startingWatch) {
+      console.log(`[${new Date().toISOString()}]: Skipping watch start, closed or already starting`)
+      return
+    }
     startingWatch = true
     try {
-      // stop any existing watch before starting a new one
       if (abortCurrentWatch) {
+        console.log(`[${new Date().toISOString()}]: Aborting existing watch before starting new one`)
         try {
           abortCurrentWatch()
         } catch {
-          /* skip */
+          console.warn(`[${new Date().toISOString()}]: Failed to abort existing watch`)
         }
         abortCurrentWatch = null
       }
@@ -173,47 +194,52 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
       }
       if (lastRV) {
         watchOpts.resourceVersion = lastRV
-        watchOpts.resourceVersionMatch = 'NotOlderThan'
+        // watchOpts.resourceVersionMatch = 'NotOlderThan'
       }
 
+      console.log(`[${new Date().toISOString()}]: Watch options:`, watchOpts)
       const reqObj = await watch.watch(watchPath, watchOpts, onEvent, onError)
+      console.log(`[${new Date().toISOString()}]: Watch established`)
       abortCurrentWatch = () => {
+        console.log(`[${new Date().toISOString()}]: Aborting watch...`)
         try {
           ;(reqObj as any)?.abort?.()
         } catch {
-          /* skip */
+          console.warn(`[${new Date().toISOString()}]: Abort failed`)
         }
         try {
           ;(reqObj as any)?.destroy?.()
         } catch {
-          /* skip */
+          console.warn(`[${new Date().toISOString()}]: Destroy failed`)
         }
       }
     } catch (err) {
+      console.error(`[${new Date().toISOString()}]: Error starting watch:`, err)
       if (!closed && isGone410(err)) {
+        console.warn(`[${new Date().toISOString()}]: Re-listing after 410 on watch start`)
         try {
           await listPage({ limit: initialLimit, _continue: undefined, captureRV: true })
-        } catch {
-          /* noop */
+        } catch (e) {
+          console.error(`[${new Date().toISOString()}]: Failed re-list after 410:`, e)
         }
       }
-      // try again a bit later
       setTimeout(() => void startWatch(), 2000)
     } finally {
       startingWatch = false
     }
   }
 
-  // Kick off: do a *single* snapshot (paged if requested) and send INITIAL once
   try {
+    console.log(`[${new Date().toISOString()}]: Performing initial list...`)
     const page = await listPage({
       limit: initialLimit,
       _continue: initialContinue,
-      captureRV: true, // anchor the watch to this snapshot
+      captureRV: true,
     })
 
     if (!sentInitial && ws.readyState === WebSocket.OPEN) {
       sentInitial = true
+      console.log(`[${new Date().toISOString()}]: Sending INITIAL snapshot to client`)
       try {
         ws.send(
           JSON.stringify({
@@ -224,39 +250,42 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
             resourceVersion: page.resourceVersion,
           }),
         )
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error(`[${new Date().toISOString()}]: Failed to send INITIAL page:`, err)
       }
     }
-  } catch {
-    // snapshot failed; proceed to watch "from now"
-    // (do NOT zero out lastRV; if sinceRV was provided we want to NotOlderThan from it)
-    sentInitial = true // prevent accidental INITIAL later
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}]: Initial list failed:`, err)
+    sentInitial = true
   }
 
   void startWatch()
   const rotateIv = setInterval(
     () => {
+      console.log(`[${new Date().toISOString()}]: Periodic watch rotation triggered`)
       void startWatch()
     },
     10 * 60 * 1000,
   )
 
-  // Infinite scroll: UI requests more pages after INITIAL using the `_continue` token.
   ws.on('message', async data => {
+    console.log(`[${new Date().toISOString()}]: Received WS message:`, data.toString())
     if (closed) return
     let msg: any
     try {
       msg = JSON.parse(String(data))
     } catch {
+      console.warn(`[${new Date().toISOString()}]: Invalid JSON from client`)
       return
     }
     if (msg?.type === 'SCROLL') {
+      console.log(`[${new Date().toISOString()}]: Client requested SCROLL:`, msg)
       const limit = typeof msg.limit === 'number' && msg.limit > 0 ? Math.trunc(msg.limit) : undefined
       const token = typeof msg.continue === 'string' ? msg.continue : undefined
       if (!token) return
       try {
-        const page = await listPage({ limit, _continue: token, captureRV: false }) // do NOT touch lastRV
+        const page = await listPage({ limit, _continue: token, captureRV: false })
+        console.log(`[${new Date().toISOString()}]: Sending PAGE to client:`, { count: page.items.length })
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(
             JSON.stringify({
@@ -268,6 +297,7 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
           )
         }
       } catch (e) {
+        console.error(`[${new Date().toISOString()}]: Page fetch failed:`, e)
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'PAGE_ERROR', error: 'Failed to load next page' }))
         }
@@ -275,9 +305,9 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
     }
   })
 
-  // Keep-alive pings with liveness tracking
   let isAlive = true
   ;(ws as any).on?.('pong', () => {
+    console.log(`[${new Date().toISOString()}]: Pong received from client`)
     isAlive = true
   })
 
@@ -285,36 +315,42 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
     try {
       if ((ws as any).readyState !== WebSocket.OPEN) return
       if (!isAlive) {
-        // no pong since last ping — terminate to free resources
+        console.warn(`[${new Date().toISOString()}]: No pong received — terminating socket`)
         ;(ws as any).terminate?.()
         return
       }
       isAlive = false
+      console.log(`[${new Date().toISOString()}]: Sending ping to client`)
       ;(ws as any).ping?.()
     } catch (e) {
-      console.debug('events ping error (ignored):', e)
+      console.debug(`[${new Date().toISOString()}]: Ping error (ignored):`, e)
     }
   }, 25_000)
 
   const cleanup = () => {
+    console.log(`[${new Date().toISOString()}]: Cleaning up WebSocket and watchers`)
     closed = true
     clearInterval(pingIv)
     clearInterval(rotateIv)
     try {
       abortCurrentWatch?.()
     } catch {
-      /* skip */
+      console.warn(`[${new Date().toISOString()}]: Abort during cleanup failed`)
     }
     abortCurrentWatch = null
   }
 
-  ;(ws as any).on?.('close', cleanup)
-  ;(ws as any).on?.('error', () => {
+  ;(ws as any).on?.('close', () => {
+    console.log(`[${new Date().toISOString()}]: WebSocket closed`)
+    cleanup()
+  })
+  ;(ws as any).on?.('error', err => {
+    console.error(`[${new Date().toISOString()}]: WebSocket error:`, err)
     cleanup()
     try {
       ;(ws as any).close?.()
     } catch (e) {
-      console.debug('events ws close error (ignored):', e)
+      console.debug(`[${new Date().toISOString()}]: Error closing WS after error (ignored):`, e)
     }
   })
 }
