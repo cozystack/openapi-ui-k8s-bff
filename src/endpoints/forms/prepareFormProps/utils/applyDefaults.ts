@@ -15,7 +15,12 @@ export const applyDefaults = (schema: any, value: unknown): any => {
     // If it's boolean true (additionalProperties: true), create a schema object
     if (schema === true) {
       return {
-        type: typeof value === 'object' && value !== null && !Array.isArray(value) ? 'object' : Array.isArray(value) ? 'array' : typeof value,
+        type:
+          typeof value === 'object' && value !== null && !Array.isArray(value)
+            ? 'object'
+            : Array.isArray(value)
+            ? 'array'
+            : typeof value,
         default: value,
       }
     }
