@@ -13,6 +13,8 @@ export const podLogsWebSocket: WebsocketRequestHandler = async (ws, req) => {
 
   const filteredHeaders = { ...req.headers }
   delete filteredHeaders['host'] // Avoid passing internal host header
+  delete filteredHeaders['content-length'] // This header causes "stream has been aborted"
+
   Object.keys(filteredHeaders).forEach(key => {
     if (key.startsWith('sec-websocket-')) {
       delete filteredHeaders[key]

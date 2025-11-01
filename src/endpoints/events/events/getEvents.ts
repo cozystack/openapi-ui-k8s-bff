@@ -5,6 +5,7 @@ export const getEvents: RequestHandler = async (req, res) => {
   try {
     const filteredHeaders = { ...req.headers }
     delete filteredHeaders['host'] // Avoid passing internal host header
+    delete filteredHeaders['content-length'] // This header causes "stream has been aborted"
 
     const userKubeClient = createUserKubeClient(filteredHeaders)
 
