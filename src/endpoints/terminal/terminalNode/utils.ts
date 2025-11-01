@@ -332,7 +332,11 @@ export const waitForContainerReady = async ({
     } catch (error: any) {
       console.error(
         `[${new Date().toISOString()}]: Websocket: ContainerWaiting: Error checking pod status (attempt ${attempt}/${maxAttempts}):`,
-        error.message,
+        error.message || {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+        },
       )
       // sendError(`Error checking pod status (attempt ${attempt}/${maxAttempts})`)
 

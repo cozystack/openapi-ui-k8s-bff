@@ -24,8 +24,12 @@ async function fetchAndDerefSwagger(): Promise<OpenAPIV2.Document | undefined> {
     console.log(`[${new Date().toISOString()}]: Cache initialized: swagger, swaggerPaths`)
 
     return derefedSpec
-  } catch (err) {
-    console.error('Error fetching swagger:', err)
+  } catch (error) {
+    console.error('Error fetching swagger:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    })
     return undefined
   }
 }

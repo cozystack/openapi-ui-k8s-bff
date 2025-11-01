@@ -67,6 +67,7 @@ export const prepare = async ({
     hiddenPaths,
     expandedPaths,
     persistedPaths,
+    sortPaths,
     propertiesToApply: properties,
     requiredToApply: required,
   } = processOverride({
@@ -94,9 +95,10 @@ export const prepare = async ({
     hiddenPaths: hiddenPaths || [],
     expandedPaths: uniqExpanded,
     persistedPaths: uniqPersisted,
+    sortPaths,
     kindName,
     isNamespaced,
     formPrefills: formsPrefillsData?.items.find(item => item.spec.customizationId === customizationId),
-    namespacesData: namespacesData?.items.map(item => item.metadata.name),
+    namespacesData: namespacesData?.items?.map(item => item.metadata?.name).filter(Boolean),
   }
 }

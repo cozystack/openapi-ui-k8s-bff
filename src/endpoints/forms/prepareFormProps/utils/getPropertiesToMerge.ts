@@ -22,7 +22,13 @@ export const getPropertiesToMerge = ({
     try {
       prefillVals = _.get(prefillValuesSchema, pathWithoutProperties.join('.'))
       // eslint-disable-next-line no-empty, @typescript-eslint/no-unused-vars
-    } catch (e) {}
+    } catch (error) {
+      console.error('[prefillVals-get] Error:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error,
+      })
+    }
 
     if (prefillVals) {
       const apSchemaPath = `${path.join('.')}.additionalProperties`

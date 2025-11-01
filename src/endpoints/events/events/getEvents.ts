@@ -5,6 +5,7 @@ export const getEvents: RequestHandler = async (req, res) => {
   try {
     const filteredHeaders = { ...req.headers }
     delete filteredHeaders['host'] // Avoid passing internal host header
+    delete filteredHeaders['content-length'] // This header causes "stream has been aborted"
 
     const userKubeClient = createUserKubeClient(filteredHeaders)
 
@@ -48,10 +49,27 @@ export const getEvents: RequestHandler = async (req, res) => {
       items,
       continue: list.metadata?._continue ?? null,
     })
-  } catch (err: any) {
-    console.error('Error listing events:', err?.response?.data || err)
+  } catch (error: any) {
+    console.error(
+      'Error listing events:',
+      error?.response?.data || {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+          body: req.body,
+        } ||
+        error,
+    )
     res.status(500).json({
-      error: err?.response?.data?.message || err?.message || 'Failed to list events',
+      error:
+        error?.response?.data?.message ||
+        error?.message || {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+          body: req.body,
+        } ||
+        'Failed to list events',
     })
   }
 }

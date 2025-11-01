@@ -148,8 +148,12 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: p, item: obj }))
         }
-      } catch (err) {
-        console.warn(`[${new Date().toISOString()}]: Failed to send event:`, err)
+      } catch (error) {
+        console.warn(`[${new Date().toISOString()}]: Failed to send event:`, {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+        })
       }
     }
   }
@@ -161,8 +165,12 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
       console.warn(`[${new Date().toISOString()}]: 410 Gone detected, resetting list page`)
       try {
         await listPage({ limit: initialLimit, _continue: undefined, captureRV: true })
-      } catch (e) {
-        console.error(`[${new Date().toISOString()}]: Failed to reset listPage after 410:`, e)
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}]: Failed to reset listPage after 410:`, {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+        })
       }
     }
     // Restart the watch after a short delay; ensure we stop the current one first
@@ -213,14 +221,22 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
           console.warn(`[${new Date().toISOString()}]: Destroy failed`)
         }
       }
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}]: Error starting watch:`, err)
-      if (!closed && isGone410(err)) {
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}]: Error starting watch:`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error,
+      })
+      if (!closed && isGone410(error)) {
         console.warn(`[${new Date().toISOString()}]: Re-listing after 410 on watch start`)
         try {
           await listPage({ limit: initialLimit, _continue: undefined, captureRV: true })
-        } catch (e) {
-          console.error(`[${new Date().toISOString()}]: Failed re-list after 410:`, e)
+        } catch (error) {
+          console.error(`[${new Date().toISOString()}]: Failed re-list after 410:`, {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            error: error,
+          })
         }
       }
       setTimeout(() => void startWatch(), 2000)
@@ -250,12 +266,20 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
             resourceVersion: page.resourceVersion,
           }),
         )
-      } catch (err) {
-        console.error(`[${new Date().toISOString()}]: Failed to send INITIAL page:`, err)
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}]: Failed to send INITIAL page:`, {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+        })
       }
     }
-  } catch (err) {
-    console.error(`[${new Date().toISOString()}]: Initial list failed:`, err)
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}]: Initial list failed:`, {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    })
     sentInitial = true
   }
 
@@ -296,8 +320,12 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
             }),
           )
         }
-      } catch (e) {
-        console.error(`[${new Date().toISOString()}]: Page fetch failed:`, e)
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}]: Page fetch failed:`, {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error,
+        })
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'PAGE_ERROR', error: 'Failed to load next page' }))
         }
@@ -322,8 +350,12 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
       isAlive = false
       console.log(`[${new Date().toISOString()}]: Sending ping to client`)
       ;(ws as any).ping?.()
-    } catch (e) {
-      console.debug(`[${new Date().toISOString()}]: Ping error (ignored):`, e)
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}]: Ping error (ignored):`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error,
+      })
     }
   }, 25_000)
 
@@ -349,8 +381,12 @@ export const eventsWebSocket: WebsocketRequestHandler = async (ws: WebSocket, re
     cleanup()
     try {
       ;(ws as any).close?.()
-    } catch (e) {
-      console.debug(`[${new Date().toISOString()}]: Error closing WS after error (ignored):`, e)
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}]: Error closing WS after error (ignored):`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error,
+      })
     }
   })
 }
