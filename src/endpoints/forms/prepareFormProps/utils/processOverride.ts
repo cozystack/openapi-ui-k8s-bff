@@ -22,12 +22,12 @@ export const processOverride = ({
   propertiesToApply: { [name: string]: OpenAPIV2.SchemaObject }
   requiredToApply?: string[]
 } => {
-  let hiddenPaths
-  let expandedPaths
-  let persistedPaths
-  let sortPaths
+  let hiddenPaths: string[][] | undefined
+  let expandedPaths: string[][] | undefined
+  let persistedPaths: string[][] | undefined
+  let sortPaths: string[][] | undefined
   let propertiesToApply = newProperties
-  let requiredToApply
+  let requiredToApply: string[] | undefined
 
   if (specificCustomOverrides) {
     if (specificCustomOverrides.spec.hidden) {
