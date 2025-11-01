@@ -9,7 +9,7 @@ export const processMultilineInYaml = (yamlContent: string): string => {
   try {
     // Parse the YAML to get the object structure
     const parsed = yaml.parse(yamlContent)
-    
+
     // Convert back to YAML with proper multiline formatting
     const processed = yaml.stringify(parsed, {
       // Use literal block scalar (|) for multiline strings
@@ -21,11 +21,15 @@ export const processMultilineInYaml = (yamlContent: string): string => {
       // Use literal block scalar for multiline strings
       defaultStringType: 'QUOTE_DOUBLE',
     })
-    
+
     return processed
   } catch (error) {
     // If parsing fails, return original content
-    console.warn('Failed to process multiline YAML:', error)
+    console.warn('Failed to process multiline YAML:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    })
     return yamlContent
   }
 }
@@ -35,6 +39,7 @@ export const processMultilineInYaml = (yamlContent: string): string => {
  * @param values - The form values object
  * @returns Processed values with multiline strings properly formatted
  */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const processMultilineInFormValues = (values: any): any => {
   if (!values || typeof values !== 'object') {
     return values
@@ -90,16 +95,7 @@ export const shouldBeMultiline = (value: string): boolean => {
   }
 
   // Check for multiline indicators
-  const multilineIndicators = [
-    '#cloud-config',
-    '#!/',
-    '---',
-    '```',
-    'BEGIN',
-    'END',
-    '-----BEGIN',
-    '-----END',
-  ]
+  const multilineIndicators = ['#cloud-config', '#!/', '---', '```', 'BEGIN', 'END', '-----BEGIN', '-----END']
 
   return multilineIndicators.some(indicator => value.includes(indicator))
 }
