@@ -99,6 +99,6 @@ export const prepare = async ({
     kindName,
     isNamespaced,
     formPrefills: formsPrefillsData?.items.find(item => item.spec.customizationId === customizationId),
-    namespacesData: namespacesData?.items.map(item => item.metadata.name),
+    namespacesData: namespacesData?.items?.map(item => item.metadata?.name).filter(Boolean),
   }
 }

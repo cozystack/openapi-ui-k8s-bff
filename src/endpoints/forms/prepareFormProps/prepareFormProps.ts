@@ -57,6 +57,17 @@ export const prepareFormProps: RequestHandler = async (req: TPrepareFormReq, res
     })
     res.json(result)
   } catch (error) {
-    res.status(500).json(error)
+    console.error('[prepareFormProps] Error:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+      body: req.body,
+    })
+
+    const errorResponse = {
+      error: error instanceof Error ? error.message : String(error),
+      ...(process.env.DEVELOPMENT === 'TRUE' && error instanceof Error ? { stack: error.stack } : {}),
+    }
+    res.status(500).json(errorResponse)
   }
 }
