@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { OpenAPIV2 } from 'openapi-types'
 import { TJSON } from 'src/localTypes/JSON'
 import { deepMerge } from 'src/utils/deepMerge'
 import { buildNestedObject } from './buildNestedObject'
@@ -7,12 +8,14 @@ import { applyDefaults } from './applyDefaults'
 export const getPropertiesToMerge = ({
   pathsWithAdditionalProperties,
   prefillValuesSchema,
-  bodyParametersSchema,
+  mergedProperties,
 }: {
   pathsWithAdditionalProperties: (string | number)[][]
   prefillValuesSchema?: TJSON | undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bodyParametersSchema: any
+  mergedProperties: {
+    [name: string]: OpenAPIV2.SchemaObject
+  }
 }): Record<string, unknown> => {
   return pathsWithAdditionalProperties.reduce((acc: Record<string, unknown>, path: (string | number)[]) => {
     const pathWithoutProperties = path.filter((_, i) => {
@@ -32,8 +35,8 @@ export const getPropertiesToMerge = ({
 
     if (prefillVals) {
       const apSchemaPath = `${path.join('.')}.additionalProperties`
-      const additionalPropSchema = _.get(bodyParametersSchema.properties, apSchemaPath)
-      const prefillValsType = _.get(bodyParametersSchema.properties, `${path.join('.')}.additionalProperties.type`)
+      const additionalPropSchema = _.get(mergedProperties, apSchemaPath)
+      const prefillValsType = _.get(mergedProperties, `${path.join('.')}.additionalProperties.type`)
 
       const openapiValues: Record<string, unknown> = { properties: {} }
 

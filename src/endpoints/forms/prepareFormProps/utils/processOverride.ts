@@ -4,7 +4,7 @@ import { TFormOverride } from 'src/localTypes/formExtensions'
 import { deepMerge } from 'src/utils/deepMerge'
 import { overwriteMatchingKeys } from './overwriteMatchingKeys'
 
-export const processOverride = ({
+export const processOverrideSchema = ({
   specificCustomOverrides,
   newProperties,
   bodyParametersSchema,
@@ -15,37 +15,13 @@ export const processOverride = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bodyParametersSchema: any
 }): {
-  hiddenPaths?: string[][]
-  expandedPaths?: string[][]
-  persistedPaths?: string[][]
-  sortPaths?: string[][]
   propertiesToApply: { [name: string]: OpenAPIV2.SchemaObject }
   requiredToApply?: string[]
 } => {
-  let hiddenPaths: string[][] | undefined
-  let expandedPaths: string[][] | undefined
-  let persistedPaths: string[][] | undefined
-  let sortPaths: string[][] | undefined
   let propertiesToApply = newProperties
   let requiredToApply: string[] | undefined
 
   if (specificCustomOverrides) {
-    if (specificCustomOverrides.spec.hidden) {
-      hiddenPaths = specificCustomOverrides.spec.hidden
-    }
-
-    if (specificCustomOverrides.spec.expanded) {
-      expandedPaths = specificCustomOverrides.spec.expanded
-    }
-
-    if (specificCustomOverrides.spec.persisted) {
-      persistedPaths = specificCustomOverrides.spec.persisted
-    }
-
-    if (specificCustomOverrides.spec.sort) {
-      sortPaths = specificCustomOverrides.spec.sort
-    }
-
     // full replace
     if (specificCustomOverrides.spec.strategy === 'fullReplace') {
       if (specificCustomOverrides.spec.schema.properties) {
@@ -107,5 +83,5 @@ export const processOverride = ({
     requiredToApply = bodyParametersSchema.required
   }
 
-  return { hiddenPaths, expandedPaths, persistedPaths, sortPaths, propertiesToApply, requiredToApply }
+  return { propertiesToApply, requiredToApply }
 }
